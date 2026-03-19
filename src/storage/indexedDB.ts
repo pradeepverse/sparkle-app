@@ -117,13 +117,17 @@ export async function deleteEntriesForDate(dateString: string): Promise<void> {
 
 // ─── Convenience: get stars earned per day for the last N days ───────────────
 
+function toLocalDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export async function getStarsPerDay(days: number): Promise<{ date: string; stars: number }[]> {
   const result: { date: string; stars: number }[] = []
   const today = new Date()
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today)
     d.setDate(today.getDate() - i)
-    const dateString = d.toISOString().slice(0, 10)
+    const dateString = toLocalDateString(d)
     const entries = await getEntriesForDate(dateString)
     const stars = entries.reduce((sum, e) => sum + e.starsEarned + e.bonusStars, 0)
     result.push({ date: dateString, stars })

@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
 import type { Habit, Reward } from '../../types'
+import { LOCAL_STORAGE_KEYS } from '../../types'
+import { lsSet } from '../../storage/localStorage'
 import { exportBackup, importBackup, readBackupMeta } from '../../storage/backup'
 import styles from './ConfigureScreen.module.css'
 
@@ -531,6 +533,91 @@ function RewardsConfig({
   )
 }
 
+// ─── PIN change ───────────────────────────────────────────────────────────────
+
+function PinChangeCard() {
+  const [open, setOpen]         = useState(false)
+  const [newPin, setNewPin]     = useState('')
+  const [confirm, setConfirm]   = useState('')
+  const [error, setError]       = useState('')
+  const [success, setSuccess]   = useState(false)
+
+  function handleSave() {
+    if (newPin.length !== 4) { setError('PIN must be exactly 4 digits'); return }
+    if (newPin !== confirm)  { setError("PINs don't match — try again"); return }
+    lsSet(LOCAL_STORAGE_KEYS.PARENT_PIN, newPin)
+    setOpen(false)
+    setNewPin('')
+    setConfirm('')
+    setError('')
+    setSuccess(true)
+    setTimeout(() => setSuccess(false), 3000)
+  }
+
+  function handleCancel() {
+    setOpen(false)
+    setNewPin('')
+    setConfirm('')
+    setError('')
+  }
+
+  const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4)
+
+  return (
+    <div className={styles.backupCard}>
+      <div className={styles.backupCardTitle}>🔐 Parent PIN</div>
+      {!open ? (
+        <>
+          {success && <p className={styles.pinSuccess}>PIN updated successfully!</p>}
+          <p className={styles.backupDesc}>Change the 4-digit PIN used to access the parent area.</p>
+          <button className={styles.uploadBtn} onClick={() => setOpen(true)}>
+            Change PIN
+          </button>
+        </>
+      ) : (
+        <>
+          <div className={styles.formRow}>
+            <label className={styles.label}>New PIN</label>
+            <input
+              className={styles.pinInput}
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="••••"
+              value={newPin}
+              onChange={e => { setNewPin(onlyDigits(e.target.value)); setError('') }}
+              autoFocus
+            />
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.label}>Confirm</label>
+            <input
+              className={styles.pinInput}
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="••••"
+              value={confirm}
+              onChange={e => { setConfirm(onlyDigits(e.target.value)); setError('') }}
+            />
+          </div>
+          {error && <div className={styles.backupError}>{error}</div>}
+          <div className={styles.formBtns}>
+            <button
+              className={styles.saveBtn}
+              onClick={handleSave}
+              disabled={newPin.length !== 4 || confirm.length !== 4}
+            >
+              ✅ Save PIN
+            </button>
+            <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Backup config ────────────────────────────────────────────────────────────
 
 function BackupConfig() {
@@ -589,6 +676,9 @@ function BackupConfig() {
 
   return (
     <div className={styles.section}>
+      {/* ── PIN ────────────────────────────────────────────── */}
+      <PinChangeCard />
+
       {/* ── Export ─────────────────────────────────────────── */}
       <div className={styles.backupCard}>
         <div className={styles.backupCardTitle}>📤 Export</div>

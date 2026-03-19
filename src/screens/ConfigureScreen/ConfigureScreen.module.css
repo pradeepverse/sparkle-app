@@ -562,3 +562,32 @@
   border-radius: 10px;
   padding: 0.5rem 0.8rem;
 }
+
+/* ─── PIN change ─────────────────────────────────────────────── */
+
+.pinInput {
+  width: 100px;
+  padding: 0.55rem 0.8rem;
+  border: 2px solid var(--color-primary-light);
+  border-radius: 14px;
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.3em;
+  background: white;
+  color: var(--color-primary-dark);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.pinInput:focus { border-color: var(--color-primary); }
+
+.pinSuccess {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: #2e7d32;
+  background: #e8f5e9;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  margin: 0;
+}

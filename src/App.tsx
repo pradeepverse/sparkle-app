@@ -25,8 +25,19 @@ const DEFAULT_PROGRESS: UserProgress = {
   unicornName: UNICORN_LEVEL_NAMES[1],
 }
 
+function toDateString(d: Date): string {
+  // Use local calendar date, not UTC — so the day resets at local midnight
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function getTodayString(): string {
-  return new Date().toISOString().slice(0, 10)
+  return toDateString(new Date())
+}
+
+function getYesterdayString(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return toDateString(d)
 }
 
 function makeEntryId(habitId: string, date: string) {
@@ -49,6 +60,9 @@ export default function App() {
   const [starBumpKey,        setStarBumpKey]         = useState(0)
 
   // Parent section
+  // Tracks the current calendar date — updates every 30s to detect midnight rollover
+  const [currentDate, setCurrentDate] = useState(() => getTodayString())
+
   const [pinUnlocked,  setPinUnlocked]  = useState(false)
   const [parentTab,    setParentTab]    = useState<'approval' | 'dashboard' | 'configure'>('approval')
   const [redeemTarget, setRedeemTarget] = useState<Reward | null>(null)
@@ -80,27 +94,23 @@ export default function App() {
     seedAndLoad().catch(console.error)
   }, [])
 
-  // ── Load today's entries from IndexedDB ───────────────────────────────────
+  // ── Midnight rollover detector ─────────────────────────────────────────────
   useEffect(() => {
-    const today = getTodayString()
-    getEntriesForDate(today)
+    const interval = setInterval(() => setCurrentDate(getTodayString()), 30_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // ── Load today's entries — re-runs whenever the calendar date changes ─────
+  // This handles both initial load and midnight rollovers (app open overnight).
+  useEffect(() => {
+    getEntriesForDate(currentDate)
       .then(todayEntries => {
         const map = new Map<string, DailyEntry>()
-        for (const entry of todayEntries) {
-          map.set(entry.habitId, entry)
-        }
+        for (const entry of todayEntries) map.set(entry.habitId, entry)
         setEntries(map)
       })
       .catch(console.error)
-  }, [])
-
-  // ── Daily reset: clear in-memory entries if it's a new day ───────────────
-  useEffect(() => {
-    const today = getTodayString()
-    if (progress.lastActiveDate && progress.lastActiveDate !== today) {
-      setEntries(new Map())
-    }
-  }, [progress.lastActiveDate])
+  }, [currentDate])
 
   // ── Persist progress to localStorage whenever it changes ─────────────────
   useEffect(() => {
@@ -258,8 +268,11 @@ export default function App() {
 
     if (starsEarned + bonus === 0) return
     setProgress(prev => {
-      const isNewDay = prev.lastActiveDate !== today
-      const newStreak = isNewDay ? prev.currentStreak + 1 : prev.currentStreak
+      const isNewDay      = prev.lastActiveDate !== today
+      const wasYesterday  = prev.lastActiveDate === getYesterdayString()
+      const newStreak     = isNewDay
+        ? (wasYesterday ? prev.currentStreak + 1 : 1)  // reset to 1 if gap > 1 day
+        : prev.currentStreak
       const newTotal = prev.totalStars + starsEarned + bonus
       const newLevel = computeLevel(newTotal)
       return {
