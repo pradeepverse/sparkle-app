@@ -1,0 +1,83 @@
+/* ─── Shared keyframes ───────────────────────────────────────────────────────
+   These are global because CSS Modules do not scope @keyframes.
+   Import this file once in main.tsx.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Unicorn idle: gentle floating */
+@keyframes sparkle-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+/* Unicorn happy dance: big bouncy jump */
+@keyframes sparkle-wiggle {
+  0%   { transform: translateY(0)    rotate(0deg)   scale(1); }
+  15%  { transform: translateY(-30px) rotate(-18deg) scale(1.2); }
+  30%  { transform: translateY(-15px) rotate(18deg)  scale(1.18); }
+  45%  { transform: translateY(-28px) rotate(-14deg) scale(1.22); }
+  60%  { transform: translateY(-10px) rotate(12deg)  scale(1.15); }
+  78%  { transform: translateY(-20px) rotate(-8deg)  scale(1.1); }
+  100% { transform: translateY(0)    rotate(0deg)   scale(1); }
+}
+
+/* Habit card: completion pop */
+@keyframes sparkle-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.15); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Star count: number bump */
+@keyframes sparkle-bump {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.35); }
+}
+
+/* Glow pulse */
+@keyframes sparkle-glow {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--color-primary-light)); }
+  50%       { filter: drop-shadow(0 0 22px var(--color-accent)); }
+}
+
+/* Aura ring pulse (happy / magical moods) */
+@keyframes aura-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.55; }
+  50%       { transform: scale(1.12); opacity: 0.85; }
+}
+
+/* Sleepy slow breathe */
+@keyframes sleepy-breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(0.94); }
+}
+
+/* Rainbow shimmer for party mode */
+@keyframes sparkle-rainbow {
+  0%   { filter: hue-rotate(0deg) brightness(1.1); }
+  100% { filter: hue-rotate(360deg) brightness(1.1); }
+}
+
+/* Star burst particles flying outward */
+@keyframes star-fly {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+}
+
+/* Fade in from below (screen transitions) */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Sparkle twinkle for magical mood */
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  50%       { opacity: 0.6; transform: scale(1.4) rotate(15deg); }
+}
+
+/* Confetti drop */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}

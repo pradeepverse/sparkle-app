@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+
+# Claude Code local settings (permissions, hooks)
+.claude/
+
+# Playwright MCP runtime output (logs, screenshots)
+.playwright-mcp/

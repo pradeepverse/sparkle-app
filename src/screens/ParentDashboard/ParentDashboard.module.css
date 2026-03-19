@@ -1,0 +1,230 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  animation: slide-up 0.25s ease both;
+}
+
+/* ─── Stat row ────────────────────────────────────────────── */
+
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+.statCard {
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 1rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  box-shadow: var(--shadow-card);
+}
+
+.statEmoji { font-size: 1.8rem; }
+
+.statValue {
+  font-size: var(--font-size-xl);
+  font-weight: 900;
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ─── Today card ──────────────────────────────────────────── */
+
+.todayCard {
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 1rem 1.2rem;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.todayTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  color: var(--color-primary-dark);
+}
+
+.todayRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.todayStars {
+  font-weight: 900;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+}
+
+.todayHabits {
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.progressBar {
+  height: 10px;
+  background: #f3e5f5;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/* ─── Reset today ─────────────────────────────────────────── */
+
+.resetSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.resetBtn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #fff3e0;
+  color: #e65100;
+  border-radius: 16px;
+  font-weight: 900;
+  font-size: var(--font-size-base);
+  border: 2px solid #ffcc80;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.resetBtn:hover  { background: #ffe0b2; transform: scale(1.02); }
+.resetBtn:active { transform: scale(0.98); }
+
+.resetConfirm {
+  background: #fff3e0;
+  border: 2px solid #ffcc80;
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.resetWarning {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: #bf360c;
+  text-align: center;
+}
+
+.resetBtns {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.resetConfirmYes {
+  flex: 1;
+  padding: 0.65rem;
+  background: #e53935;
+  color: white;
+  border-radius: var(--radius-button);
+  font-weight: 900;
+  font-size: var(--font-size-base);
+  transition: transform var(--transition-fast);
+}
+
+.resetConfirmYes:hover  { transform: scale(1.03); }
+.resetConfirmYes:active { transform: scale(0.97); }
+
+.resetConfirmNo {
+  flex: 1;
+  padding: 0.65rem;
+  background: #f3e5f5;
+  color: var(--color-primary-dark);
+  border-radius: var(--radius-button);
+  font-weight: 900;
+  font-size: var(--font-size-base);
+  transition: transform var(--transition-fast);
+}
+
+.resetConfirmNo:hover  { transform: scale(1.03); }
+.resetConfirmNo:active { transform: scale(0.97); }
+
+/* ─── Week chart ──────────────────────────────────────────── */
+
+.weekCard {
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 1rem 1.2rem 1.4rem;
+  box-shadow: var(--shadow-card);
+}
+
+.weekTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  color: var(--color-primary-dark);
+  margin-bottom: 1rem;
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+  align-items: end;
+}
+
+.barCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.barWrap {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  width: 100%;
+  background: #e1bee7;
+  border-radius: 6px 6px 2px 2px;
+  min-height: 3px;
+  transition: height 0.4s ease;
+}
+
+.barToday {
+  background: var(--color-primary);
+}
+
+.dayLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.dayLabelToday {
+  color: var(--color-primary);
+}
+
+.starCount {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--color-text-muted);
+}

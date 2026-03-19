@@ -1,0 +1,38 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.drops {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.drop {
+  font-size: 2rem;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  padding: 0.2rem;
+  filter: grayscale(1) opacity(0.35);
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.drop:not(:disabled):hover {
+  transform: scale(1.2);
+  filter: grayscale(0) opacity(1);
+}
+
+.filled {
+  filter: grayscale(0) opacity(1) drop-shadow(0 2px 6px rgba(33, 150, 243, 0.5));
+  animation: sparkle-pop 0.3s ease both;
+}
+
+.complete {
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  color: var(--color-primary-dark);
+  text-align: center;
+}

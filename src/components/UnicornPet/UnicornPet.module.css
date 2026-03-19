@@ -1,0 +1,139 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  position: relative;
+}
+
+/* ─── Core unicorn ───────────────────────────────────────────────────── */
+
+.unicorn {
+  font-size: 100px;
+  line-height: 1;
+  /* Default idle float */
+  animation: sparkle-float 3s ease-in-out infinite;
+  transition: filter var(--transition-normal);
+}
+
+/* ─── Mood variants ──────────────────────────────────────────────────── */
+
+.magical {
+  font-size: 120px;
+  filter: drop-shadow(0 0 12px var(--color-primary-light))
+          drop-shadow(0 0 30px rgba(224, 64, 251, 0.5));
+  animation: sparkle-float 2.5s ease-in-out infinite,
+             sparkle-glow 2s ease-in-out infinite;
+}
+
+.happy {
+  font-size: 110px;
+  filter: drop-shadow(0 0 8px rgba(224, 64, 251, 0.45));
+  animation: sparkle-float 3s ease-in-out infinite;
+}
+
+.okay {
+  font-size: 95px;
+  filter: saturate(0.55) brightness(0.88);
+  animation: sparkle-float 4s ease-in-out infinite;
+}
+
+.sleepy {
+  font-size: 80px;
+  filter: saturate(0.15) brightness(0.65) grayscale(0.5);
+  animation: sleepy-breathe 4s ease-in-out infinite;
+}
+
+.party {
+  font-size: 120px;
+  animation: sparkle-float 1.5s ease-in-out infinite,
+             sparkle-rainbow 2s linear infinite;
+  filter: drop-shadow(0 0 16px var(--color-accent));
+}
+
+/* ─── Aura (mood background circle) ─────────────────────────────────── */
+
+.aura {
+  position: absolute;
+  border-radius: 50%;
+  transition: background 0.5s ease, width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+}
+
+.aura_sleepy  { width: 130px; height: 130px; background: #bdbdbd; opacity: 0.3; top: 10px; left: 50%; transform: translateX(-50%); }
+.aura_okay    { width: 150px; height: 150px; background: #ce93d8; opacity: 0.35; top: 5px; left: 50%; transform: translateX(-50%); }
+.aura_happy   { width: 170px; height: 170px; background: #f48fb1; opacity: 0.5; top: 0; left: 50%; transform: translateX(-50%); animation: aura-pulse 2s ease-in-out infinite; }
+.aura_magical { width: 190px; height: 190px; background: radial-gradient(circle, #e040fb 0%, #7c4dff 100%); opacity: 0.55; top: -5px; left: 50%; transform: translateX(-50%); animation: aura-pulse 1.5s ease-in-out infinite; }
+.aura_party   { width: 200px; height: 200px; background: conic-gradient(#ff6b6b, #ffd93d, #6bcb77, #4d96ff, #e040fb, #ff6b6b); opacity: 0.5; top: -8px; left: 50%; transform: translateX(-50%) rotate(0deg); animation: sparkle-rainbow 3s linear infinite; }
+
+/* ─── Mood overlay emoji ─────────────────────────────────────────────── */
+
+.overlay {
+  font-size: 2rem;
+  position: relative;
+  z-index: 2;
+  animation: twinkle 1.5s ease-in-out infinite;
+  margin-bottom: -0.5rem;
+}
+
+/* ─── Dance (triggered on star earn) ────────────────────────────────── */
+
+.dancing {
+  animation: sparkle-wiggle 0.8s ease-in-out !important;
+}
+
+/* ─── Halo (magical + party) ─────────────────────────────────────────── */
+
+.halo {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  margin-bottom: -0.5rem;
+}
+
+.haloStar {
+  animation: twinkle 1.2s ease-in-out infinite;
+}
+
+.haloStar:nth-child(2) { animation-delay: 0.4s; }
+.haloStar:nth-child(3) { animation-delay: 0.8s; }
+
+/* ─── Confetti (party mode) ──────────────────────────────────────────── */
+
+.confetti {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.confettiPiece {
+  position: absolute;
+  font-size: 1.2rem;
+  animation: confetti-fall 2s ease-in infinite;
+  animation-delay: calc(var(--i) * 0.3s);
+  left: calc((var(--i) - 3) * 28px);
+}
+
+/* ─── Labels ─────────────────────────────────────────────────────────── */
+
+.moodLabel {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-top: 0.2rem;
+  transition: color 0.4s ease;
+}
+
+.label_sleepy  { color: #9e9e9e; }
+.label_okay    { color: #7c4dff; }
+.label_happy   { color: #e91e8c; }
+.label_magical { color: #e040fb; }
+.label_party   { color: #ff6b6b; }
+
+.name {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
