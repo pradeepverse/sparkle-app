@@ -10,13 +10,12 @@ interface UnicornPetProps {
   isAnimating: boolean
 }
 
-// Extra overlay emoji shown above the unicorn per mood
-const MOOD_OVERLAY: Record<UnicornMood, string | null> = {
-  party:   null,    // confetti handles it
-  magical: '🌟',
-  happy:   '😊',
-  okay:    null,
-  sleepy:  '💤',
+const MOOD_IMAGE: Record<UnicornMood, string> = {
+  sleepy:  `${import.meta.env.BASE_URL}unicorn-sleepy.webp`,
+  okay:    `${import.meta.env.BASE_URL}unicorn-okay.webp`,
+  happy:   `${import.meta.env.BASE_URL}unicorn-happy.webp`,
+  magical: `${import.meta.env.BASE_URL}unicorn-magical.webp`,
+  party:   `${import.meta.env.BASE_URL}unicorn-party.webp`,
 }
 
 export function UnicornPet({ mood, level, isAnimating }: UnicornPetProps) {
@@ -31,8 +30,6 @@ export function UnicornPet({ mood, level, isAnimating }: UnicornPetProps) {
   }, [isAnimating])
 
   const unicornName = UNICORN_LEVEL_NAMES[level] ?? 'Sparkle'
-
-  const overlay = MOOD_OVERLAY[mood]
 
   return (
     <div
@@ -63,22 +60,17 @@ export function UnicornPet({ mood, level, isAnimating }: UnicornPetProps) {
         </div>
       )}
 
-      {/* Mood overlay emoji (💤 sleepy, 😊 happy, 🌟 magical) */}
-      {overlay && (
-        <div className={styles.overlay} aria-hidden="true">{overlay}</div>
-      )}
-
-      {/* The unicorn */}
-      <div
+      {/* The unicorn image */}
+      <img
         data-testid="unicorn-pet"
+        src={MOOD_IMAGE[mood]}
+        alt=""
         className={[
           styles.unicorn,
           styles[mood],
           dancing ? styles.dancing : '',
         ].join(' ')}
-      >
-        🦄
-      </div>
+      />
 
       {/* Mood label */}
       <div className={[styles.moodLabel, styles[`label_${mood}`]].join(' ')} aria-hidden="true">
