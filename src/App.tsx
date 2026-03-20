@@ -25,6 +25,21 @@ const DEFAULT_PROGRESS: UserProgress = {
   unicornName: UNICORN_LEVEL_NAMES[1],
 }
 
+// ─── Hash-based navigation helpers ───────────────────────────────────────────
+
+function getHashForScreen(s: Screen): string {
+  if (s === 'rewards') return '#rewards'
+  if (s === 'parent-approval') return '#parent'
+  return '#'
+}
+
+function getScreenFromHash(): Screen {
+  const hash = window.location.hash.slice(1)
+  if (hash === 'rewards') return 'rewards'
+  if (hash === 'parent') return 'parent-approval'
+  return 'home'
+}
+
 function toDateString(d: Date): string {
   // Use local calendar date, not UTC — so the day resets at local midnight
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -47,7 +62,7 @@ function makeEntryId(habitId: string, date: string) {
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [screen, setScreen]   = useState<Screen>('home')
+  const [screen, setScreen]   = useState<Screen>(() => getScreenFromHash())
   const [habits, setHabits]   = useState<Habit[]>([])
   const [rewards, setRewards] = useState<Reward[]>([])
   const [entries, setEntries] = useState<Map<string, DailyEntry>>(new Map())
@@ -66,6 +81,22 @@ export default function App() {
   const [pinUnlocked,  setPinUnlocked]  = useState(false)
   const [parentTab,    setParentTab]    = useState<'approval' | 'dashboard' | 'configure'>('approval')
   const [redeemTarget, setRedeemTarget] = useState<Reward | null>(null)
+
+  // ── Browser history: sync screen state with URL hash ─────────────────────
+  // Stamp the initial history entry so the very first back-press works.
+  useEffect(() => {
+    history.replaceState({ screen }, '', getHashForScreen(screen))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Listen for browser back / forward buttons.
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      setScreen((e.state?.screen as Screen) ?? getScreenFromHash())
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   // ── Seed habits + rewards into IndexedDB ──────────────────────────────────
   useEffect(() => {
@@ -287,6 +318,12 @@ export default function App() {
     })
   }, [])
 
+  // ── Navigate: push a history entry + update React state ──────────────────
+  const navigateTo = useCallback((s: Screen) => {
+    history.pushState({ screen: s }, '', getHashForScreen(s))
+    setScreen(s)
+  }, [])
+
   // ── Screen switch ─────────────────────────────────────────────────────────
   function renderScreen() {
     switch (screen) {
@@ -299,7 +336,7 @@ export default function App() {
             isUnicornAnimating={isUnicornAnimating}
             starBumpKey={starBumpKey}
             onTapHabit={handleTapHabit}
-            onShowParent={() => setScreen('parent-approval')}
+            onShowParent={() => navigateTo('parent-approval')}
           />
         )
 
@@ -308,7 +345,7 @@ export default function App() {
           return (
             <PinGate
               onUnlock={() => setPinUnlocked(true)}
-              onBack={() => setScreen('home')}
+              onBack={() => navigateTo('home')}
             />
           )
         }
@@ -338,7 +375,7 @@ export default function App() {
 
             {parentTab === 'configure' ? (
               <div className={styles.dashboardWrapper}>
-                <button className={styles.dashBackBtn} onClick={() => setScreen('home')}>← Home</button>
+                <button className={styles.dashBackBtn} onClick={() => navigateTo('home')}>← Home</button>
                 <h1 className={styles.dashTitle}>⚙️ Configure</h1>
                 <ConfigureScreen
                   habits={habits}
@@ -354,11 +391,11 @@ export default function App() {
                 entries={entries}
                 onApprove={handleApproveHabit}
                 onAwardDirect={handleAwardDirectHabit}
-                onBack={() => setScreen('home')}
+                onBack={() => navigateTo('home')}
               />
             ) : (
               <div className={styles.dashboardWrapper}>
-                <button className={styles.dashBackBtn} onClick={() => setScreen('home')}>← Home</button>
+                <button className={styles.dashBackBtn} onClick={() => navigateTo('home')}>← Home</button>
                 <h1 className={styles.dashTitle}>📊 Dashboard</h1>
                 <ParentDashboard
                   progress={progress}
@@ -380,7 +417,7 @@ export default function App() {
             onRequestRedeem={setRedeemTarget}
             onConfirmRedeem={handleRedeemReward}
             onCancelRedeem={() => setRedeemTarget(null)}
-            onBack={() => setScreen('home')}
+            onBack={() => navigateTo('home')}
           />
         )
 
@@ -401,7 +438,7 @@ export default function App() {
         <nav className={styles.nav} aria-label="App navigation">
           <button
             className={screen === 'home' ? styles.navActive : ''}
-            onClick={() => setScreen('home')}
+            onClick={() => navigateTo('home')}
             aria-current={screen === 'home' ? 'page' : undefined}
             aria-label="Home"
           >
@@ -409,14 +446,14 @@ export default function App() {
           </button>
           <button
             className={screen === 'parent-approval' ? styles.navActive : ''}
-            onClick={() => setScreen('parent-approval')}
+            onClick={() => navigateTo('parent-approval')}
             aria-label="Parent section"
           >
             👩‍👧
           </button>
           <button
             className={screen === 'rewards' ? styles.navActive : ''}
-            onClick={() => setScreen('rewards')}
+            onClick={() => navigateTo('rewards')}
             aria-label="Reward shop"
           >
             🎁
