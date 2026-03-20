@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import type { Habit, Reward } from '../../types'
 import { LOCAL_STORAGE_KEYS } from '../../types'
 import { lsSet } from '../../storage/localStorage'
@@ -255,17 +255,19 @@ function HabitForm({
     <div className={styles.formCard}>
       <div className={styles.formTitle}>{isNew ? '＋ New Habit' : '✏️ Edit Habit'}</div>
 
-      <div className={styles.formRow}>
-        <label className={styles.label}>Emoji</label>
+      <div className={styles.formRowInline}>
         <div className={styles.emojiRow}>
           <span className={styles.emojiPreview}>{form.emoji || '?'}</span>
-          <input
-            className={styles.emojiInput}
-            value={form.emoji}
-            onChange={e => f({ emoji: e.target.value })}
-            maxLength={4}
-            placeholder="✨"
-          />
+          <div className={styles.formRow}>
+            <label className={styles.label}>Emoji</label>
+            <input
+              className={styles.emojiInput}
+              value={form.emoji}
+              onChange={e => f({ emoji: e.target.value })}
+              maxLength={4}
+              placeholder="✨"
+            />
+          </div>
         </div>
       </div>
 
@@ -281,20 +283,20 @@ function HabitForm({
       </div>
 
       <div className={styles.formRow}>
-        <label className={styles.label}>Time</label>
+        <label className={styles.label}>Time of day</label>
         <select
           className={styles.select}
           value={form.timeOfDay}
           onChange={e => f({ timeOfDay: e.target.value as Habit['timeOfDay'] })}
         >
           <option value="morning">☀️ Morning</option>
-          <option value="allday">💧 All Day</option>
+          <option value="allday">🌈 All Day</option>
           <option value="evening">🌙 Evening</option>
         </select>
       </div>
 
       <div className={styles.formRow}>
-        <label className={styles.label}>Type</label>
+        <label className={styles.label}>Habit type</label>
         <select
           className={styles.select}
           value={form.type}
@@ -320,31 +322,32 @@ function HabitForm({
         </label>
       )}
 
-      {form.type === 'repeatable' && (
+      <div className={styles.formRowInline}>
+        {form.type === 'repeatable' && (
+          <div className={styles.formRow}>
+            <label className={styles.label}>Max / day</label>
+            <input
+              className={styles.numberInput}
+              type="number"
+              min={1}
+              max={20}
+              value={form.maxPerDay ?? ''}
+              placeholder="∞"
+              onChange={e => f({ maxPerDay: e.target.value ? Number(e.target.value) : undefined })}
+            />
+          </div>
+        )}
         <div className={styles.formRow}>
-          <label className={styles.label}>Max / day</label>
+          <label className={styles.label}>Stars ⭐</label>
           <input
             className={styles.numberInput}
             type="number"
             min={1}
-            max={20}
-            value={form.maxPerDay ?? ''}
-            placeholder="No limit"
-            onChange={e => f({ maxPerDay: e.target.value ? Number(e.target.value) : undefined })}
+            max={100}
+            value={form.points}
+            onChange={e => f({ points: Math.max(1, Number(e.target.value)) })}
           />
         </div>
-      )}
-
-      <div className={styles.formRow}>
-        <label className={styles.label}>Stars ⭐</label>
-        <input
-          className={styles.numberInput}
-          type="number"
-          min={1}
-          max={100}
-          value={form.points}
-          onChange={e => f({ points: Math.max(1, Number(e.target.value)) })}
-        />
       </div>
 
       <div className={styles.formBtns}>
@@ -427,15 +430,17 @@ function RewardsConfig({
             />
           </div>
 
-          <div className={styles.formRow}>
-            <label className={styles.label}>Stars ⭐</label>
-            <input
-              className={styles.numberInput}
-              type="number"
-              min={1}
-              value={form.starCost}
-              onChange={e => setForm({ ...form, starCost: Math.max(1, Number(e.target.value)) })}
-            />
+          <div className={styles.formRowInline}>
+            <div className={styles.formRow}>
+              <label className={styles.label}>Stars ⭐</label>
+              <input
+                className={styles.numberInput}
+                type="number"
+                min={1}
+                value={form.starCost}
+                onChange={e => setForm({ ...form, starCost: Math.max(1, Number(e.target.value)) })}
+              />
+            </div>
           </div>
 
           <div className={styles.visualToggle}>
@@ -450,10 +455,10 @@ function RewardsConfig({
           </div>
 
           {imageMode === 'emoji' ? (
-            <div className={styles.formRow}>
-              <label className={styles.label}>Emoji</label>
-              <div className={styles.emojiRow}>
-                <span className={styles.emojiPreview}>{form.emoji || '?'}</span>
+            <div className={styles.formRowInline}>
+              <span className={styles.emojiPreview}>{form.emoji || '?'}</span>
+              <div className={styles.formRow}>
+                <label className={styles.label}>Emoji</label>
                 <input
                   className={styles.emojiInput}
                   value={form.emoji}
@@ -533,14 +538,65 @@ function RewardsConfig({
   )
 }
 
+// ─── PIN dots display ──────────────────────────────────────────────────────────
+
+function PinDotField({
+  value,
+  onChange,
+  autoFocus = false,
+  label,
+}: {
+  value: string
+  onChange: (v: string) => void
+  autoFocus?: boolean
+  label: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4)
+
+  return (
+    <div className={styles.pinFieldRow}>
+      <span className={styles.label}>{label}</span>
+      <div
+        className={styles.pinDotField}
+        onClick={() => inputRef.current?.focus()}
+        role="button"
+        tabIndex={-1}
+        aria-label={label}
+      >
+        {Array.from({ length: 4 }).map((_, i) => (
+          <span
+            key={i}
+            className={[styles.pinDot, i < value.length ? styles.pinDotFilled : ''].join(' ')}
+          />
+        ))}
+        <input
+          ref={inputRef}
+          type="tel"
+          inputMode="numeric"
+          maxLength={4}
+          value={value}
+          onChange={e => onChange(onlyDigits(e.target.value))}
+          className={styles.pinHiddenInput}
+          autoFocus={autoFocus}
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  )
+}
+
 // ─── PIN change ───────────────────────────────────────────────────────────────
 
 function PinChangeCard() {
-  const [open, setOpen]         = useState(false)
-  const [newPin, setNewPin]     = useState('')
-  const [confirm, setConfirm]   = useState('')
-  const [error, setError]       = useState('')
-  const [success, setSuccess]   = useState(false)
+  const [open, setOpen]       = useState(false)
+  const [newPin, setNewPin]   = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError]     = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const handleNewPin = useCallback((v: string) => { setNewPin(v); setError('') }, [])
+  const handleConfirm = useCallback((v: string) => { setConfirm(v); setError('') }, [])
 
   function handleSave() {
     if (newPin.length !== 4) { setError('PIN must be exactly 4 digits'); return }
@@ -561,8 +617,6 @@ function PinChangeCard() {
     setError('')
   }
 
-  const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4)
-
   return (
     <div className={styles.backupCard}>
       <div className={styles.backupCardTitle}>🔐 Parent PIN</div>
@@ -576,31 +630,8 @@ function PinChangeCard() {
         </>
       ) : (
         <>
-          <div className={styles.formRow}>
-            <label className={styles.label}>New PIN</label>
-            <input
-              className={styles.pinInput}
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="••••"
-              value={newPin}
-              onChange={e => { setNewPin(onlyDigits(e.target.value)); setError('') }}
-              autoFocus
-            />
-          </div>
-          <div className={styles.formRow}>
-            <label className={styles.label}>Confirm</label>
-            <input
-              className={styles.pinInput}
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="••••"
-              value={confirm}
-              onChange={e => { setConfirm(onlyDigits(e.target.value)); setError('') }}
-            />
-          </div>
+          <PinDotField label="New PIN"  value={newPin}  onChange={handleNewPin}  autoFocus />
+          <PinDotField label="Confirm"  value={confirm} onChange={handleConfirm} />
           {error && <div className={styles.backupError}>{error}</div>}
           <div className={styles.formBtns}>
             <button

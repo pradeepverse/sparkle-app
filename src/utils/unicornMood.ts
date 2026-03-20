@@ -16,6 +16,7 @@ export function computeMood(
 
   const pct = maxPossibleToday > 0 ? starsEarnedToday / maxPossibleToday : 0
 
+  if (pct >= 1.0) return 'party'
   if (streak >= 7 && pct >= 0.7) return 'party'
   if (pct >= 0.7) return 'magical'
   if (pct >= 0.4) return 'happy'

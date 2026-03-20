@@ -11,7 +11,9 @@ interface HomeScreenProps {
   progress: UserProgress
   isUnicornAnimating: boolean
   starBumpKey: number               // changes to trigger star number bump animation
+  soundEnabled: boolean
   onTapHabit: (habitId: string) => void
+  onToggleSound: () => void
   onShowParent: () => void
 }
 
@@ -21,7 +23,9 @@ export function HomeScreen({
   progress,
   isUnicornAnimating,
   starBumpKey,
+  soundEnabled,
   onTapHabit,
+  onToggleSound,
   onShowParent,
 }: HomeScreenProps) {
   const starsToday = Array.from(entries.values()).reduce(
@@ -38,14 +42,23 @@ export function HomeScreen({
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className={styles.header}>
         <h1 className={styles.title}>Sparkle ✨</h1>
-        <div
-          className={styles.starCount}
-          key={starBumpKey}
-          aria-live="polite"
-          aria-label={`${progress.totalStars} total stars`}
-        >
-          <span aria-hidden="true">⭐</span>
-          <span className={styles.starNumber}>{progress.totalStars}</span>
+        <div className={styles.headerRight}>
+          <div
+            className={styles.starCount}
+            key={starBumpKey}
+            aria-live="polite"
+            aria-label={`${progress.totalStars} total stars`}
+          >
+            <span aria-hidden="true">⭐</span>
+            <span className={styles.starNumber}>{progress.totalStars}</span>
+          </div>
+          <button
+            className={styles.soundBtn}
+            onClick={onToggleSound}
+            aria-label={soundEnabled ? 'Mute sounds' : 'Unmute sounds'}
+          >
+            {soundEnabled ? '🔔' : '🔕'}
+          </button>
         </div>
       </header>
 

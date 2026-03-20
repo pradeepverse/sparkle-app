@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Screen, Habit, DailyEntry, UserProgress, Reward } from './types'
 import { LOCAL_STORAGE_KEYS, IDB_STORES, UNICORN_LEVEL_NAMES } from './types'
 import { lsGet, lsSet } from './storage/localStorage'
+import { playPendingTap, playStarsEarned, playLuckyStar, playRewardRedeemed } from './utils/sounds'
 import { idbGet, idbGetAll, idbPut, idbDelete, getEntriesForDate, deleteEntriesForDate } from './storage/indexedDB'
 import { DEFAULT_HABITS, PARENT_APPROVE_HABIT_IDS } from './data/habits'
 import { ConfigureScreen } from './screens/ConfigureScreen/ConfigureScreen'
@@ -78,6 +79,9 @@ export default function App() {
   // Tracks the current calendar date — updates every 30s to detect midnight rollover
   const [currentDate, setCurrentDate] = useState(() => getTodayString())
 
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(
+    () => lsGet<boolean>(LOCAL_STORAGE_KEYS.SOUND_ENABLED) ?? true
+  )
   const [pinUnlocked,  setPinUnlocked]  = useState(false)
   const [parentTab,    setParentTab]    = useState<'approval' | 'dashboard' | 'configure'>('approval')
   const [redeemTarget, setRedeemTarget] = useState<Reward | null>(null)
@@ -184,10 +188,12 @@ export default function App() {
     await idbPut(IDB_STORES.DAILY_ENTRIES, updated)
     setEntries(prev => new Map(prev).set(habitId, updated))
 
-    if (!needsApproval) {
+    if (needsApproval) {
+      if (soundEnabled) playPendingTap()
+    } else {
       triggerCelebration(habit.points, 0, today)
     }
-  }, [habits, entries])
+  }, [habits, entries, soundEnabled])
 
   // ── Handle parent approval ─────────────────────────────────────────────────
   const handleApproveHabit = useCallback(async (habitId: string) => {
@@ -285,6 +291,7 @@ export default function App() {
     await idbPut(IDB_STORES.REWARDS, updated)
     setRewards(prev => prev.map(r => r.id === reward.id ? updated : r))
     setProgress(prev => ({ ...prev, totalStars: prev.totalStars - reward.starCost }))
+    if (soundEnabled) playRewardRedeemed()
     triggerCelebration(0, 0, getTodayString())
     setRedeemTarget(null)
   }, [progress.totalStars])
@@ -296,6 +303,10 @@ export default function App() {
     setStarBurstBonus(bonus)
     setStarBurstTrigger(prev => prev + 1)
     setStarBumpKey(prev => prev + 1)
+    if (soundEnabled) {
+      if (bonus > 0) playLuckyStar()
+      else playStarsEarned()
+    }
 
     if (starsEarned + bonus === 0) return
     setProgress(prev => {
@@ -316,6 +327,15 @@ export default function App() {
         unicornName: UNICORN_LEVEL_NAMES[newLevel],
       }
     })
+  }, [soundEnabled])
+
+  // ── Sound toggle ──────────────────────────────────────────────────────────
+  const handleToggleSound = useCallback(() => {
+    setSoundEnabled(prev => {
+      const next = !prev
+      lsSet(LOCAL_STORAGE_KEYS.SOUND_ENABLED, next)
+      return next
+    })
   }, [])
 
   // ── Navigate: push a history entry + update React state ──────────────────
@@ -335,7 +355,9 @@ export default function App() {
             progress={progress}
             isUnicornAnimating={isUnicornAnimating}
             starBumpKey={starBumpKey}
+            soundEnabled={soundEnabled}
             onTapHabit={handleTapHabit}
+            onToggleSound={handleToggleSound}
             onShowParent={() => navigateTo('parent-approval')}
           />
         )

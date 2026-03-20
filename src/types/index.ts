@@ -71,6 +71,7 @@ export const UNICORN_LEVEL_NAMES: Record<number, string> = {
 export const LOCAL_STORAGE_KEYS = {
   USER_PROGRESS: 'sparkle_progress',
   PARENT_PIN: 'sparkle_pin',
+  SOUND_ENABLED: 'sparkle_sound',
 } as const
 
 export const IDB_DB_NAME = 'sparkle-db'

@@ -249,16 +249,23 @@
 
 .formRow {
   display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Inline variant for compact fields (number inputs, emoji) */
+.formRowInline {
+  display: flex;
   align-items: center;
   gap: 0.7rem;
 }
 
 .label {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 900;
   color: var(--color-text-muted);
-  width: 5rem;
-  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .emojiRow {
@@ -283,17 +290,20 @@
   font-family: inherit;
   text-align: center;
   background: white;
+  box-sizing: border-box;
 }
 
 .textInput {
-  flex: 1;
-  padding: 0.5rem 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
   border: 2px solid var(--color-primary-light);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: var(--font-size-base);
   font-family: inherit;
   font-weight: 700;
   background: white;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .textInput:focus,
@@ -302,30 +312,34 @@
 .numberInput:focus {
   outline: none;
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
 }
 
 .select {
-  flex: 1;
-  padding: 0.5rem 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
   border: 2px solid var(--color-primary-light);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: var(--font-size-base);
   font-family: inherit;
   font-weight: 700;
   background: white;
   cursor: pointer;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .numberInput {
-  width: 6rem;
-  padding: 0.5rem 0.6rem;
+  width: 7rem;
+  padding: 0.6rem 0.7rem;
   border: 2px solid var(--color-primary-light);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: var(--font-size-base);
   font-family: inherit;
   font-weight: 700;
   text-align: center;
   background: white;
+  box-sizing: border-box;
 }
 
 .checkRow {
@@ -337,13 +351,17 @@
   color: var(--color-text-muted);
   cursor: pointer;
   padding: 0.3rem 0;
+  background: #f3e5f5;
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
 }
 
 .checkRow input[type="checkbox"] {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1.2rem;
+  height: 1.2rem;
   accent-color: var(--color-primary);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .formBtns {
@@ -563,24 +581,54 @@
   padding: 0.5rem 0.8rem;
 }
 
-/* ─── PIN change ─────────────────────────────────────────────── */
+/* ─── PIN dot field ──────────────────────────────────────────── */
 
-.pinInput {
-  width: 100px;
-  padding: 0.55rem 0.8rem;
+.pinFieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pinDotField {
+  position: relative;
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.7rem 1rem;
+  background: #f3e5f5;
   border: 2px solid var(--color-primary-light);
-  border-radius: 14px;
-  font-size: var(--font-size-lg);
-  font-weight: 900;
-  text-align: center;
-  letter-spacing: 0.3em;
-  background: white;
-  color: var(--color-primary-dark);
-  outline: none;
+  border-radius: 16px;
+  cursor: text;
   transition: border-color var(--transition-fast);
 }
 
-.pinInput:focus { border-color: var(--color-primary); }
+.pinDotField:focus-within {
+  border-color: var(--color-primary);
+  background: white;
+}
+
+.pinDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid var(--color-primary-light);
+  background: transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pinDotFilled {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.pinHiddenInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+}
 
 .pinSuccess {
   font-size: var(--font-size-sm);

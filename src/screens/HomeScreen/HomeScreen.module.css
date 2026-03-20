@@ -25,6 +25,12 @@
   line-height: 1;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .starCount {
   display: flex;
   align-items: center;
@@ -34,6 +40,18 @@
   color: var(--color-accent-dark);
   animation: sparkle-bump 0.35s ease both;
 }
+
+.soundBtn {
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0.2rem;
+  background: none;
+  border-radius: 50%;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  opacity: 0.75;
+}
+
+.soundBtn:hover { opacity: 1; transform: scale(1.15); }
 
 .starNumber {
   min-width: 2ch;
