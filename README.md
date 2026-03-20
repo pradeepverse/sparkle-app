@@ -19,49 +19,6 @@
 
 ---
 
-## Screenshots
-
-<table>
-<tr>
-<td align="center" width="25%">
-<img src="docs/screenshots/01-home-empty.png" width="200" alt="Home screen — fresh day"/>
-<br/><sub><b>Fresh day — unicorn is sleepy</b></sub>
-</td>
-<td align="center" width="25%">
-<img src="docs/screenshots/02-home-progress.png" width="200" alt="Home screen — habits in progress"/>
-<br/><sub><b>Habits in progress — stars earned!</b></sub>
-</td>
-<td align="center" width="25%">
-<img src="docs/screenshots/04-parent-approvals.png" width="200" alt="Parent approvals screen"/>
-<br/><sub><b>Parent approvals — PIN-gated</b></sub>
-</td>
-<td align="center" width="25%">
-<img src="docs/screenshots/05-parent-dashboard.png" width="200" alt="Parent dashboard"/>
-<br/><sub><b>Parent dashboard — streaks & stats</b></sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="25%">
-<img src="docs/screenshots/03-pin-gate.png" width="200" alt="PIN gate"/>
-<br/><sub><b>PIN gate — keeps kids out</b></sub>
-</td>
-<td align="center" width="25%">
-<img src="docs/screenshots/06-configure-habits.png" width="200" alt="Configure habits"/>
-<br/><sub><b>Configure habits & rewards</b></sub>
-</td>
-<td align="center" width="25%">
-<img src="docs/screenshots/07-rewards-shop.png" width="200" alt="Reward shop"/>
-<br/><sub><b>Reward shop — spend your stars</b></sub>
-</td>
-<td align="center" width="25%">
-<img src="docs/screenshots/03-pin-gate.png" width="200" alt="PIN setup"/>
-<br/><sub><b>First-run PIN setup — dot indicators</b></sub>
-</td>
-</tr>
-</table>
-
----
-
 ## How it works
 
 ### For the child
