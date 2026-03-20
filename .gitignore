@@ -8,3 +8,7 @@ dist/
 
 # Playwright MCP runtime output (logs, screenshots)
 .playwright-mcp/
+
+# Source/working video files (only unicorn.webm is used by the app)
+public/*.mp4
+public/archive/

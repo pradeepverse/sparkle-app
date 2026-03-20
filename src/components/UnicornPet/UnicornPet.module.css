@@ -11,48 +11,48 @@
 .unicorn {
   width: 150px;
   height: 150px;
-  object-fit: contain;
+  object-fit: cover;
   position: relative;
   z-index: 1;
   animation: sparkle-float 3s ease-in-out infinite;
-  transition: width 0.3s ease, height 0.3s ease, filter 0.4s ease;
+  transition: width 0.3s ease, height 0.3s ease, filter 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+  /* Fade video edges so it blends seamlessly with the app background */
+  mask-image: radial-gradient(ellipse 62% 68% at 50% 50%, black 45%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 62% 68% at 50% 50%, black 45%, transparent 80%);
 }
 
 /* ─── Mood variants ──────────────────────────────────────────────────── */
 
 .magical {
-  width: 180px;
-  height: 180px;
-  filter: drop-shadow(0 0 14px var(--color-primary-light))
-          drop-shadow(0 0 32px rgba(224, 64, 251, 0.55));
+  width: 210px;
+  height: 210px;
   animation: sparkle-float 2.5s ease-in-out infinite,
              sparkle-glow 2s ease-in-out infinite;
 }
 
 .happy {
-  width: 165px;
-  height: 165px;
-  filter: drop-shadow(0 0 8px rgba(224, 64, 251, 0.4));
+  width: 195px;
+  height: 195px;
   animation: sparkle-float 3s ease-in-out infinite;
 }
 
 .okay {
-  width: 145px;
-  height: 145px;
+  width: 175px;
+  height: 175px;
   animation: sparkle-float 4s ease-in-out infinite;
 }
 
 .sleepy {
-  width: 125px;
-  height: 125px;
+  width: 155px;
+  height: 155px;
   animation: sleepy-breathe 4s ease-in-out infinite;
 }
 
 .party {
-  width: 185px;
-  height: 185px;
+  width: 215px;
+  height: 215px;
   animation: sparkle-float 1.5s ease-in-out infinite;
-  filter: drop-shadow(0 0 18px var(--color-accent));
 }
 
 /* ─── Aura (mood background circle) ─────────────────────────────────── */
@@ -63,50 +63,22 @@
   transition: background 0.5s ease, width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
 }
 
-.aura_sleepy  { width: 130px; height: 130px; background: #bdbdbd; opacity: 0.3; top: 10px; left: 50%; transform: translateX(-50%); }
-.aura_okay    { width: 150px; height: 150px; background: #ce93d8; opacity: 0.35; top: 5px; left: 50%; transform: translateX(-50%); }
-.aura_happy   { width: 170px; height: 170px; background: #f48fb1; opacity: 0.5; top: 0; left: 50%; transform: translateX(-50%); animation: aura-pulse 2s ease-in-out infinite; }
-.aura_magical { width: 190px; height: 190px; background: radial-gradient(circle, #e040fb 0%, #7c4dff 100%); opacity: 0.55; top: -5px; left: 50%; transform: translateX(-50%); animation: aura-pulse 1.5s ease-in-out infinite; }
-.aura_party   { width: 200px; height: 200px; background: conic-gradient(#ff6b6b, #ffd93d, #6bcb77, #4d96ff, #e040fb, #ff6b6b); opacity: 0.5; top: -8px; left: 50%; transform: translateX(-50%) rotate(0deg); animation: sparkle-rainbow 3s linear infinite; }
+.aura_sleepy  { width: 160px; height: 160px; background: #bdbdbd; opacity: 0.25; top: 0; left: 50%; transform: translateX(-50%); }
+.aura_okay    { width: 180px; height: 180px; background: #ce93d8; opacity: 0.35; top: -5px; left: 50%; transform: translateX(-50%); }
+.aura_happy   { width: 200px; height: 200px; background: #f48fb1; opacity: 0.45; top: -10px; left: 50%; transform: translateX(-50%); animation: aura-pulse 2s ease-in-out infinite; }
+.aura_magical { width: 220px; height: 220px; background: radial-gradient(circle, #e040fb 0%, #7c4dff 100%); opacity: 0.5; top: -15px; left: 50%; transform: translateX(-50%); animation: aura-pulse 1.5s ease-in-out infinite; }
+.aura_party   { width: 230px; height: 230px; background: conic-gradient(#ff6b6b, #ffd93d, #6bcb77, #4d96ff, #e040fb, #ff6b6b); opacity: 0.5; top: -18px; left: 50%; transform: translateX(-50%) rotate(0deg); animation: sparkle-rainbow 3s linear infinite; }
+
+/* ─── Fade in once video is ready ───────────────────────────────────── */
+
+.videoVisible {
+  opacity: 1;
+}
 
 /* ─── Dance (triggered on star earn) ────────────────────────────────── */
 
 .dancing {
   animation: sparkle-wiggle 0.8s ease-in-out !important;
-}
-
-/* ─── Halo (magical + party) ─────────────────────────────────────────── */
-
-.halo {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 1.4rem;
-  margin-bottom: -0.5rem;
-}
-
-.haloStar {
-  animation: twinkle 1.2s ease-in-out infinite;
-}
-
-.haloStar:nth-child(2) { animation-delay: 0.4s; }
-.haloStar:nth-child(3) { animation-delay: 0.8s; }
-
-/* ─── Confetti (party mode) ──────────────────────────────────────────── */
-
-.confetti {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.confettiPiece {
-  position: absolute;
-  font-size: 1.2rem;
-  animation: confetti-fall 2s ease-in infinite;
-  animation-delay: calc(var(--i) * 0.3s);
-  left: calc((var(--i) - 3) * 28px);
 }
 
 /* ─── Labels ─────────────────────────────────────────────────────────── */
