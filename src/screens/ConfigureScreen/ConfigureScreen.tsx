@@ -333,7 +333,8 @@ function HabitForm({
               max={20}
               value={form.maxPerDay ?? ''}
               placeholder="∞"
-              onChange={e => f({ maxPerDay: e.target.value ? Number(e.target.value) : undefined })}
+              onChange={e => f({ maxPerDay: e.target.value === '' ? undefined : Number(e.target.value) })}
+              onBlur={e => { if (e.target.value !== '' && Number(e.target.value) < 1) f({ maxPerDay: 1 }) }}
             />
           </div>
         )}
@@ -344,14 +345,15 @@ function HabitForm({
             type="number"
             min={1}
             max={100}
-            value={form.points}
-            onChange={e => f({ points: Math.max(1, Number(e.target.value)) })}
+            value={form.points || ''}
+            onChange={e => f({ points: e.target.value === '' ? 0 : Number(e.target.value) })}
+            onBlur={() => f({ points: Math.max(1, form.points || 1) })}
           />
         </div>
       </div>
 
       <div className={styles.formBtns}>
-        <button className={styles.saveBtn} onClick={onSave} disabled={saving || !form.name.trim()}>
+        <button className={styles.saveBtn} onClick={onSave} disabled={saving || !form.name.trim() || !form.points}>
           {saving ? '...' : '✅ Save'}
         </button>
         <button className={styles.cancelBtn} onClick={onCancel}>Cancel</button>
@@ -437,8 +439,9 @@ function RewardsConfig({
                 className={styles.numberInput}
                 type="number"
                 min={1}
-                value={form.starCost}
-                onChange={e => setForm({ ...form, starCost: Math.max(1, Number(e.target.value)) })}
+                value={form.starCost || ''}
+                onChange={e => setForm({ ...form, starCost: e.target.value === '' ? 0 : Number(e.target.value) })}
+                onBlur={() => setForm(f => f ? { ...f, starCost: Math.max(1, f.starCost || 1) } : f)}
               />
             </div>
           </div>
@@ -494,7 +497,7 @@ function RewardsConfig({
           )}
 
           <div className={styles.formBtns}>
-            <button className={styles.saveBtn} onClick={handleSave} disabled={saving || !form.name.trim()}>
+            <button className={styles.saveBtn} onClick={handleSave} disabled={saving || !form.name.trim() || !form.starCost}>
               {saving ? '...' : '✅ Save'}
             </button>
             <button className={styles.cancelBtn} onClick={() => setForm(null)}>Cancel</button>
