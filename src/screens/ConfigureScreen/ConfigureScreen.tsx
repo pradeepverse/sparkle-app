@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import type { Habit, Reward } from '../../types'
+import type { Habit, Reward, StarRupeeRatio } from '../../types'
 import { LOCAL_STORAGE_KEYS } from '../../types'
 import { lsSet } from '../../storage/localStorage'
 import { exportBackup, importBackup, readBackupMeta } from '../../storage/backup'
@@ -63,6 +63,8 @@ interface ConfigureScreenProps {
   onSaveHabit: (habit: Habit) => Promise<void>
   onSaveReward: (reward: Reward) => Promise<void>
   onDeleteReward: (rewardId: string) => Promise<void>
+  ratio: StarRupeeRatio
+  onRatioChange: (r: StarRupeeRatio) => void
 }
 
 export function ConfigureScreen({
@@ -71,6 +73,8 @@ export function ConfigureScreen({
   onSaveHabit,
   onSaveReward,
   onDeleteReward,
+  ratio,
+  onRatioChange,
 }: ConfigureScreenProps) {
   const [tab, setTab] = useState<'habits' | 'rewards' | 'backup'>('habits')
 
@@ -98,7 +102,7 @@ export function ConfigureScreen({
       </div>
 
       {tab === 'habits'  && <HabitsConfig habits={habits} onSave={onSaveHabit} />}
-      {tab === 'rewards' && <RewardsConfig rewards={rewards} onSave={onSaveReward} onDelete={onDeleteReward} />}
+      {tab === 'rewards' && <RewardsConfig rewards={rewards} onSave={onSaveReward} onDelete={onDeleteReward} ratio={ratio} onRatioChange={onRatioChange} />}
       {tab === 'backup'  && <BackupConfig />}
     </div>
   )
@@ -368,22 +372,64 @@ function RewardsConfig({
   rewards,
   onSave,
   onDelete,
+  ratio,
+  onRatioChange,
 }: {
   rewards: Reward[]
   onSave: (r: Reward) => Promise<void>
   onDelete: (id: string) => Promise<void>
+  ratio: StarRupeeRatio
+  onRatioChange: (r: StarRupeeRatio) => void
 }) {
   const [form, setForm] = useState<Reward | null>(null)
+  const [priceStr, setPriceStr] = useState('')
   const [imageMode, setImageMode] = useState<'emoji' | 'image'>('emoji')
   const [saving, setSaving] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [ratioStarsStr, setRatioStarsStr] = useState(String(ratio.stars))
+  const [ratioRupeesStr, setRatioRupeesStr] = useState(String(ratio.rupees))
   const fileRef = useRef<HTMLInputElement>(null)
 
   const isNew = form ? !rewards.some(r => r.id === form.id) : false
 
+  function starsToPrice(stars: number): string {
+    if (!ratio.stars) return ''
+    return ((stars / ratio.stars) * ratio.rupees).toFixed(2).replace(/\.00$/, '')
+  }
+
+  function priceToStars(price: number): number {
+    if (!ratio.rupees) return 1
+    return Math.max(1, Math.round((price / ratio.rupees) * ratio.stars))
+  }
+
   function openEdit(reward: Reward) {
     setForm({ ...reward })
     setImageMode(reward.thumbnail ? 'image' : 'emoji')
+    setPriceStr(starsToPrice(reward.starCost))
+  }
+
+  function handleStarsChange(value: string) {
+    const stars = value === '' ? 0 : Number(value)
+    setForm(f => f ? { ...f, starCost: stars } : f)
+    if (value !== '') setPriceStr(starsToPrice(stars))
+  }
+
+  function handlePriceChange(value: string) {
+    setPriceStr(value)
+    if (value !== '') {
+      const stars = priceToStars(Number(value))
+      setForm(f => f ? { ...f, starCost: stars } : f)
+    }
+  }
+
+  function commitRatio() {
+    const stars  = Math.max(1, Number(ratioStarsStr)  || ratio.stars)
+    const rupees = Math.max(1, Number(ratioRupeesStr) || ratio.rupees)
+    setRatioStarsStr(String(stars))
+    setRatioRupeesStr(String(rupees))
+    onRatioChange({ stars, rupees })
+    // Refresh price preview if form is open
+    if (form) setPriceStr(((form.starCost / stars) * rupees).toFixed(2).replace(/\.00$/, ''))
   }
 
   async function handleSave() {
@@ -411,8 +457,32 @@ function RewardsConfig({
 
   return (
     <div className={styles.section}>
+      {/* ── Ratio editor ── */}
+      <div className={styles.ratioCard}>
+        <span className={styles.ratioLabel}>Star → ₹ ratio</span>
+        <input
+          className={styles.ratioInput}
+          type="number"
+          min={1}
+          value={ratioStarsStr}
+          onChange={e => setRatioStarsStr(e.target.value)}
+          onBlur={commitRatio}
+          aria-label="Stars"
+        />
+        <span className={styles.ratioEq}>⭐ = ₹</span>
+        <input
+          className={styles.ratioInput}
+          type="number"
+          min={1}
+          value={ratioRupeesStr}
+          onChange={e => setRatioRupeesStr(e.target.value)}
+          onBlur={commitRatio}
+          aria-label="Rupees"
+        />
+      </div>
+
       {!form && (
-        <button className={styles.addBtn} onClick={() => { setForm(blankReward()); setImageMode('emoji') }}>
+        <button className={styles.addBtn} onClick={() => { setForm(blankReward()); setImageMode('emoji'); setPriceStr(starsToPrice(blankReward().starCost)) }}>
           ＋ Add Reward
         </button>
       )}
@@ -440,8 +510,21 @@ function RewardsConfig({
                 type="number"
                 min={1}
                 value={form.starCost || ''}
-                onChange={e => setForm({ ...form, starCost: e.target.value === '' ? 0 : Number(e.target.value) })}
+                onChange={e => handleStarsChange(e.target.value)}
                 onBlur={() => setForm(f => f ? { ...f, starCost: Math.max(1, f.starCost || 1) } : f)}
+              />
+            </div>
+            <div className={styles.formRow}>
+              <label className={styles.label}>Price ₹</label>
+              <input
+                className={styles.numberInput}
+                type="number"
+                min={0}
+                step="0.01"
+                value={priceStr}
+                onChange={e => handlePriceChange(e.target.value)}
+                onBlur={() => { if (!priceStr) setPriceStr(starsToPrice(form.starCost)) }}
+                placeholder="auto"
               />
             </div>
           </div>

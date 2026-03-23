@@ -68,10 +68,20 @@ export const UNICORN_LEVEL_NAMES: Record<number, string> = {
 
 // ─── Storage constants ────────────────────────────────────────────────────────
 
+// ─── Star-to-currency ratio ───────────────────────────────────────────────────
+
+export interface StarRupeeRatio {
+  stars: number   // e.g. 25
+  rupees: number  // e.g. 5  → meaning 25 stars = ₹5
+}
+
+export const DEFAULT_STAR_RUPEE_RATIO: StarRupeeRatio = { stars: 25, rupees: 5 }
+
 export const LOCAL_STORAGE_KEYS = {
   USER_PROGRESS: 'sparkle_progress',
   PARENT_PIN: 'sparkle_pin',
   SOUND_ENABLED: 'sparkle_sound',
+  STAR_RUPEE_RATIO: 'sparkle_star_rupee_ratio',
 } as const
 
 export const IDB_DB_NAME = 'sparkle-db'

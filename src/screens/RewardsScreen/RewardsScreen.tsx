@@ -1,4 +1,4 @@
-import type { Reward } from '../../types'
+import type { Reward, StarRupeeRatio } from '../../types'
 import styles from './RewardsScreen.module.css'
 
 interface RewardsScreenProps {
@@ -9,6 +9,7 @@ interface RewardsScreenProps {
   onConfirmRedeem: (reward: Reward) => void
   onCancelRedeem: () => void
   onBack: () => void
+  ratio?: StarRupeeRatio
 }
 
 export function RewardsScreen({
@@ -19,7 +20,13 @@ export function RewardsScreen({
   onConfirmRedeem,
   onCancelRedeem,
   onBack,
+  ratio,
 }: RewardsScreenProps) {
+  function formatPrice(starCost: number): string | null {
+    if (!ratio || !ratio.stars) return null
+    const price = (starCost / ratio.stars) * ratio.rupees
+    return `₹${price % 1 === 0 ? price : price.toFixed(2)}`
+  }
   return (
     <main className={styles.screen}>
       {/* ── Header ─────────────────────────────────────────── */}
@@ -53,6 +60,9 @@ export function RewardsScreen({
               <div className={styles.rewardName}>{reward.name}</div>
               <div className={[styles.costBadge, canAfford ? styles.costAfford : ''].join(' ')}>
                 ⭐ {reward.starCost}
+                {formatPrice(reward.starCost) && (
+                  <span className={styles.priceTag}>{formatPrice(reward.starCost)}</span>
+                )}
               </div>
 
               {reward.isUnlocked ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Screen, Habit, DailyEntry, UserProgress, Reward } from './types'
-import { LOCAL_STORAGE_KEYS, IDB_STORES, UNICORN_LEVEL_NAMES } from './types'
+import type { Screen, Habit, DailyEntry, UserProgress, Reward, StarRupeeRatio } from './types'
+import { LOCAL_STORAGE_KEYS, IDB_STORES, UNICORN_LEVEL_NAMES, DEFAULT_STAR_RUPEE_RATIO } from './types'
 import { lsGet, lsSet } from './storage/localStorage'
 import { playPendingTap, playStarsEarned, playLuckyStar, playRewardRedeemed } from './utils/sounds'
 import { idbGet, idbGetAll, idbPut, idbDelete, getEntriesForDate, deleteEntriesForDate } from './storage/indexedDB'
@@ -85,6 +85,14 @@ export default function App() {
   const [pinUnlocked,  setPinUnlocked]  = useState(false)
   const [parentTab,    setParentTab]    = useState<'approval' | 'dashboard' | 'configure'>('approval')
   const [redeemTarget, setRedeemTarget] = useState<Reward | null>(null)
+  const [starRupeeRatio, setStarRupeeRatio] = useState<StarRupeeRatio>(
+    () => lsGet<StarRupeeRatio>(LOCAL_STORAGE_KEYS.STAR_RUPEE_RATIO) ?? DEFAULT_STAR_RUPEE_RATIO
+  )
+
+  function handleRatioChange(ratio: StarRupeeRatio) {
+    setStarRupeeRatio(ratio)
+    lsSet(LOCAL_STORAGE_KEYS.STAR_RUPEE_RATIO, ratio)
+  }
 
   // ── Browser history: sync screen state with URL hash ─────────────────────
   // Stamp the initial history entry so the very first back-press works.
@@ -405,6 +413,8 @@ export default function App() {
                   onSaveHabit={handleSaveHabit}
                   onSaveReward={handleSaveReward}
                   onDeleteReward={handleDeleteReward}
+                  ratio={starRupeeRatio}
+                  onRatioChange={handleRatioChange}
                 />
               </div>
             ) : parentTab === 'approval' ? (
@@ -440,6 +450,7 @@ export default function App() {
             onConfirmRedeem={handleRedeemReward}
             onCancelRedeem={() => setRedeemTarget(null)}
             onBack={() => navigateTo('home')}
+            ratio={starRupeeRatio}
           />
         )
 
