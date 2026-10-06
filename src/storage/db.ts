@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Habit, DailyEntry, Reward, UserProgress, StarRupeeRatio } from '../types'
+import type { Habit, DailyEntry, Reward, UserProgress, StarRupeeRatio, EnglishProgress } from '../types'
 
 // Every table has a `user_id` column defaulting to auth.uid() and RLS limiting
 // each user to their own rows, so queries here never filter by user explicitly.
@@ -42,6 +42,7 @@ interface SettingsRow {
   progress: UserProgress
   parent_pin: string | null
   star_rupee_ratio: StarRupeeRatio | null
+  english_progress: EnglishProgress | null
 }
 
 const habitToRow = (h: Habit): HabitRow => ({
@@ -159,6 +160,21 @@ export async function saveParentPin(pin: string): Promise<void> {
 
 export async function saveStarRupeeRatio(ratio: StarRupeeRatio): Promise<void> {
   await saveSettings({ star_rupee_ratio: ratio })
+}
+
+export async function saveEnglishProgress(english: EnglishProgress): Promise<void> {
+  await saveSettings({ english_progress: english })
+}
+
+/**
+ * Loaded separately from loadUserData so the rest of the app still works if the
+ * english_progress migration hasn't been applied yet.
+ */
+export async function getEnglishProgress(): Promise<EnglishProgress | null> {
+  const { data, error } = await supabase
+    .from('user_settings').select('english_progress').maybeSingle<Pick<SettingsRow, 'english_progress'>>()
+  if (error) throw error
+  return data?.english_progress ?? null
 }
 
 async function saveSettings(patch: Partial<SettingsRow>): Promise<void> {

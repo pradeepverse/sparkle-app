@@ -1,8 +1,8 @@
 import {
   loadUserData, getAllEntries, replaceAllData,
-  saveProgress, saveParentPin, saveStarRupeeRatio,
+  saveProgress, saveParentPin, saveStarRupeeRatio, getEnglishProgress, saveEnglishProgress,
 } from './db'
-import type { Habit, DailyEntry, Reward, UserProgress, StarRupeeRatio } from '../types'
+import type { Habit, DailyEntry, Reward, UserProgress, StarRupeeRatio, EnglishProgress } from '../types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,6 +13,7 @@ export interface SparkleBackup {
   progress: unknown
   pin: unknown
   starRupeeRatio?: unknown
+  englishProgress?: unknown
   habits: unknown[]
   dailyEntries: unknown[]
   rewards: unknown[]
@@ -30,6 +31,7 @@ export async function exportBackup(): Promise<void> {
     progress: data.progress,
     pin: data.parentPin,
     starRupeeRatio: data.starRupeeRatio,
+    englishProgress: await getEnglishProgress().catch(() => null),
     habits: data.habits,
     dailyEntries: await getAllEntries(),
     rewards: data.rewards,
@@ -84,6 +86,10 @@ export async function importBackup(file: File): Promise<void> {
   if (backup.progress != null)       await saveProgress(backup.progress as UserProgress)
   if (typeof backup.pin === 'string') await saveParentPin(backup.pin)
   if (backup.starRupeeRatio != null) await saveStarRupeeRatio(backup.starRupeeRatio as StarRupeeRatio)
+  // Tolerate a database without the english_progress migration.
+  if (backup.englishProgress != null) {
+    await saveEnglishProgress(backup.englishProgress as EnglishProgress).catch(console.error)
+  }
 
   // Reload so the app picks up all the restored data
   window.location.reload()

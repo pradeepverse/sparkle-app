@@ -3,6 +3,20 @@ import type { Habit } from '../types'
 // Habits that need parent approval (Phase 2 wires up the approval flow)
 export const PARENT_APPROVE_HABIT_IDS = new Set(['helped-home', 'reading'])
 
+// Earned by finishing the daily lesson on the English Time screen, not by
+// tapping a habit card. Existing accounts get it added on their first lesson.
+export const ENGLISH_HABIT_ID = 'english-time'
+export const ENGLISH_HABIT: Habit = {
+  id: ENGLISH_HABIT_ID,
+  name: 'English Time',
+  emoji: '🗣️',
+  timeOfDay: 'allday',
+  type: 'once-daily',
+  points: 10,
+  requiresApproval: true,
+  isArchived: false,
+}
+
 export const DEFAULT_HABITS: Habit[] = [
   // ☀️ Morning
   {
@@ -74,6 +88,8 @@ export const DEFAULT_HABITS: Habit[] = [
     requiresApproval: true,
     isArchived: false,
   },
+
+  ENGLISH_HABIT,
 
   // 🌙 Evening
   {

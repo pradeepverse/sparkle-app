@@ -53,7 +53,50 @@ export interface Reward {
 
 // ─── Screen navigation ────────────────────────────────────────────────────────
 
-export type Screen = 'home' | 'parent-approval' | 'rewards' | 'parent-dashboard'
+export type Screen = 'home' | 'parent-approval' | 'rewards' | 'parent-dashboard' | 'english'
+
+// ─── English Time ─────────────────────────────────────────────────────────────
+
+export interface EnglishWord {
+  id: string        // unique across all lessons, e.g. 'happy'
+  en: string        // 'happy'
+  ta: string        // Tamil meaning in Tamil script
+  emoji: string
+  example: string   // short sentence using the word
+}
+
+export interface EnglishLesson {
+  id: string
+  title: string
+  emoji: string
+  words: EnglishWord[]
+  talk: {
+    question: string  // the unicorn asks this
+    starter: string   // sentence frame with ___ for the blank
+    example: string   // a full model answer
+  }
+  story: string[]     // 3–5 short sentences, read one at a time
+}
+
+/** Leitner-box state for one learned word. */
+export interface WordState {
+  box: number   // 1–5; higher = known better, reviewed less often
+  due: string   // local date "2026-10-07" — next review day
+}
+
+export interface EnglishProgress {
+  nextLesson: number        // index into ENGLISH_LESSONS (wraps around)
+  lastLessonIndex: number   // lesson finished on lastLessonDate (-1 = none yet)
+  lastLessonDate: string    // local date, '' = never
+  words: Record<string, WordState>
+}
+
+export const DEFAULT_ENGLISH_PROGRESS: EnglishProgress = {
+  nextLesson: 0,
+  lastLessonIndex: -1,
+  lastLessonDate: '',
+  words: {},
+}
 
 // ─── Unicorn ─────────────────────────────────────────────────────────────────
 

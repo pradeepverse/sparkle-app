@@ -18,7 +18,7 @@ Cloudflare Pages (Git-connected) builds every push to `main`: `npm run build` �
 
 ## Architecture
 
-**Single-page app, no router.** Navigation is a `screen` useState enum in `App.tsx` (`'home' | 'parent-approval' | 'rewards'`). `App.tsx` owns all state and passes handlers down as props — there is no context or global store.
+**Single-page app, no router.** Navigation is a `screen` useState enum in `App.tsx` (`'home' | 'parent-approval' | 'rewards' | 'english'`), mirrored in the URL hash. `App.tsx` owns all state and passes handlers down as props — there is no context or global store.
 
 ### Data flow
 
@@ -27,7 +27,7 @@ App.tsx  ──(props + handlers)──▶  Screens / Components
             ▲
             │ reads on mount, writes on every change
             │
-    Supabase ──── user_settings (progress, parent_pin, star_rupee_ratio), habits, daily_entries, rewards
+    Supabase ──── user_settings (progress, parent_pin, star_rupee_ratio, english_progress), habits, daily_entries, rewards
     localStorage ── sound on/off only (per device)
 ```
 
@@ -64,6 +64,14 @@ Gated by a 4-digit PIN (`PinGate` component; the PIN is stored in `user_settings
 - `≥ 70%` → `magical`, `≥ 40%` → `happy`, else `okay`
 
 `maxPossibleToday` is computed live from the active habits array (not a stored constant) so archiving habits immediately adjusts the thresholds.
+
+### English Time
+
+A daily ~15-minute spoken-English lesson for a young Tamil-speaking child (`src/screens/EnglishScreen/`). Steps: review due words → 4 new words → talk prompt (sentence frame) → short story. Content lives in `src/data/englishLessons.ts` (spoken-Tamil meanings, Android-safe emoji ≤ Emoji 12). Progress stores lesson **indexes**, so append new lessons rather than reordering.
+
+- Speech: `src/utils/speech.ts` (Web Speech API, prefers an `en-IN` voice). Recording: `src/utils/useRecorder.ts` (MediaRecorder, in-memory only, never uploaded).
+- Spaced repetition: `src/utils/wordReview.ts` — Leitner boxes 1–5 with intervals 1/2/4/7/14 days; state is `EnglishProgress` in `user_settings.english_progress` (loaded separately via `getEnglishProgress()` so the app still works if that migration is missing).
+- Finishing a lesson writes a pending entry for the `english-time` habit (parent approves, +10 ⭐). Older accounts get the habit created on their first finished lesson. The home screen shows it as a dedicated card instead of a habit card; archiving the habit hides the card. Repeating a lesson the same day is "practice": no review, no stars, no progress change.
 
 ### Design tokens
 

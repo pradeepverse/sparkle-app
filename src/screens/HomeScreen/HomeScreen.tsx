@@ -2,6 +2,7 @@ import type { Habit, DailyEntry, UserProgress } from '../../types'
 import { UnicornPet } from '../../components/UnicornPet/UnicornPet'
 import { HabitCard } from '../../components/HabitCard/HabitCard'
 import { computeMood } from '../../utils/unicornMood'
+import { ENGLISH_HABIT_ID } from '../../data/habits'
 import styles from './HomeScreen.module.css'
 
 interface HomeScreenProps {
@@ -14,6 +15,7 @@ interface HomeScreenProps {
   onTapHabit: (habitId: string) => void
   onToggleSound: () => void
   onShowParent: () => void
+  onOpenEnglish: () => void
 }
 
 export function HomeScreen({
@@ -26,6 +28,7 @@ export function HomeScreen({
   onTapHabit,
   onToggleSound,
   onShowParent,
+  onOpenEnglish,
 }: HomeScreenProps) {
   const starsToday = Array.from(entries.values()).reduce(
     (sum, e) => sum + e.starsEarned + e.bonusStars, 0
@@ -36,10 +39,14 @@ export function HomeScreen({
       if (h.type === 'repeatable' && h.maxPerDay !== undefined) return sum + h.points * h.maxPerDay
       return sum + h.points
     }, 0)
+  const englishHabit = habits.find(h => h.id === ENGLISH_HABIT_ID)
+  const englishEntry = entries.get(ENGLISH_HABIT_ID)
+  const showEnglish  = !englishHabit?.isArchived
   const mood = computeMood(starsToday, maxPossibleToday, progress.currentStreak)
 
   const morningHabits = habits.filter(h => h.timeOfDay === 'morning' && !h.isArchived)
-  const alldayHabits  = habits.filter(h => h.timeOfDay === 'allday'  && !h.isArchived)
+  // English Time is earned on its own screen, so it gets a dedicated card below.
+  const alldayHabits  = habits.filter(h => h.timeOfDay === 'allday'  && !h.isArchived && h.id !== ENGLISH_HABIT_ID)
   const eveningHabits = habits.filter(h => h.timeOfDay === 'evening' && !h.isArchived)
 
   return (
@@ -81,6 +88,22 @@ export function HomeScreen({
         <div className={styles.streak} aria-label={`${progress.currentStreak} day streak`}>
           🔥 {progress.currentStreak} day streak!
         </div>
+      )}
+
+      {/* ── English Time ────────────────────────────────────────────── */}
+      {showEnglish && (
+        <button className={styles.englishCard} onClick={onOpenEnglish} aria-label="Open English Time">
+          <span className={styles.englishEmoji} aria-hidden="true">🗣️</span>
+          <span className={styles.englishText}>
+            <span className={styles.englishTitle}>English Time</span>
+            <span className={styles.englishStatus}>
+              {englishEntry?.approvalStatus === 'pending' ? '⏳ Show Mama / Papa'
+                : (englishEntry?.completionCount ?? 0) >= 1 ? 'Done today! Practise again?'
+                : `Learn new words! +${englishHabit?.points ?? 10} ⭐`}
+            </span>
+          </span>
+          <span className={styles.englishArrow} aria-hidden="true">▶</span>
+        </button>
       )}
 
       {/* ── Morning habits ──────────────────────────────────────────── */}

@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { Screen, Habit, DailyEntry, UserProgress, Reward, StarRupeeRatio } from './types'
-import { LOCAL_STORAGE_KEYS, UNICORN_LEVEL_NAMES, DEFAULT_STAR_RUPEE_RATIO } from './types'
+import type { Screen, Habit, DailyEntry, UserProgress, Reward, StarRupeeRatio, EnglishLesson, EnglishProgress } from './types'
+import { LOCAL_STORAGE_KEYS, UNICORN_LEVEL_NAMES, DEFAULT_STAR_RUPEE_RATIO, DEFAULT_ENGLISH_PROGRESS } from './types'
 import { lsGet, lsSet } from './storage/localStorage'
 import { playPendingTap, playStarsEarned, playLuckyStar, playRewardRedeemed } from './utils/sounds'
 import {
   saveHabit, saveReward, deleteReward, saveEntry, getEntriesForDate, deleteEntriesForDate,
-  saveProgress, saveParentPin, saveStarRupeeRatio, type UserData,
+  saveProgress, saveParentPin, saveStarRupeeRatio, getEnglishProgress, saveEnglishProgress, type UserData,
 } from './storage/db'
-import { PARENT_APPROVE_HABIT_IDS } from './data/habits'
+import { PARENT_APPROVE_HABIT_IDS, ENGLISH_HABIT, ENGLISH_HABIT_ID } from './data/habits'
+import { completeLesson, isLessonDoneToday } from './utils/wordReview'
 import { ConfigureScreen } from './screens/ConfigureScreen/ConfigureScreen'
 import { HomeScreen } from './screens/HomeScreen/HomeScreen'
 import { ParentApprovalScreen } from './screens/ParentApprovalScreen/ParentApprovalScreen'
 import { ParentDashboard } from './screens/ParentDashboard/ParentDashboard'
 import { RewardsScreen } from './screens/RewardsScreen/RewardsScreen'
+import { EnglishScreen } from './screens/EnglishScreen/EnglishScreen'
 import { PinGate } from './components/PinGate/PinGate'
 import { StarBurst } from './components/StarBurst/StarBurst'
 import styles from './App.module.css'
@@ -22,6 +24,7 @@ import styles from './App.module.css'
 function getHashForScreen(s: Screen): string {
   if (s === 'rewards') return '#rewards'
   if (s === 'parent-approval') return '#parent'
+  if (s === 'english') return '#english'
   return '#'
 }
 
@@ -29,6 +32,7 @@ function getScreenFromHash(): Screen {
   const hash = window.location.hash.slice(1)
   if (hash === 'rewards') return 'rewards'
   if (hash === 'parent') return 'parent-approval'
+  if (hash === 'english') return 'english'
   return 'home'
 }
 
@@ -84,6 +88,25 @@ export default function App({ initialData, userEmail, onSignOut }: AppProps) {
   const [starRupeeRatio, setStarRupeeRatio] = useState<StarRupeeRatio>(
     initialData.starRupeeRatio ?? DEFAULT_STAR_RUPEE_RATIO
   )
+
+  // null until loaded from Supabase
+  const [englishProgress, setEnglishProgress] = useState<EnglishProgress | null>(null)
+  const [englishError, setEnglishError] = useState(false)
+
+  // Re-fetched each time the English screen opens, so a lesson finished on
+  // another device that day is picked up.
+  useEffect(() => {
+    if (screen !== 'english') return
+    getEnglishProgress()
+      .then(p => {
+        setEnglishProgress(p ?? DEFAULT_ENGLISH_PROGRESS)
+        setEnglishError(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setEnglishError(true)
+      })
+  }, [screen])
 
   function handleRatioChange(ratio: StarRupeeRatio) {
     setStarRupeeRatio(ratio)
@@ -145,10 +168,9 @@ export default function App({ initialData, userEmail, onSignOut }: AppProps) {
   }, [screen])
 
   // ── Handle habit tap (child) ──────────────────────────────────────────────
-  const handleTapHabit = useCallback(async (habitId: string) => {
+  const recordHabitTap = useCallback(async (habit: Habit) => {
     const today = getTodayString()
-    const habit = habits.find(h => h.id === habitId)
-    if (!habit) return
+    const habitId = habit.id
 
     const existing = entries.get(habitId)
     if (habit.type === 'once-daily' && existing && existing.completionCount >= 1) return
@@ -177,7 +199,37 @@ export default function App({ initialData, userEmail, onSignOut }: AppProps) {
     } else {
       triggerCelebration(habit.points, 0, today)
     }
-  }, [habits, entries, soundEnabled])
+  }, [entries, soundEnabled])
+
+  const handleTapHabit = useCallback(async (habitId: string) => {
+    const habit = habits.find(h => h.id === habitId)
+    if (habit) await recordHabitTap(habit)
+  }, [habits, recordHabitTap])
+
+  // ── English Time: lesson finished ─────────────────────────────────────────
+  const handleEnglishFinish = useCallback(async (lesson: EnglishLesson, reviewResults: Record<string, boolean>) => {
+    const today = getTodayString()
+    // Read the latest saved state so another device's progress isn't overwritten.
+    const latest = (await getEnglishProgress()) ?? DEFAULT_ENGLISH_PROGRESS
+    // Already recorded today (e.g. a retry after the habit write failed, or the
+    // parent reset the day): don't re-apply review results or advance again.
+    if (isLessonDoneToday(latest, today)) {
+      setEnglishProgress(latest)
+    } else {
+      const next = completeLesson(latest, lesson, reviewResults, today)
+      await saveEnglishProgress(next)
+      setEnglishProgress(next)
+    }
+
+    // Accounts created before English Time existed don't have the habit yet.
+    let habit = habits.find(h => h.id === ENGLISH_HABIT_ID)
+    if (!habit) {
+      habit = ENGLISH_HABIT
+      await saveHabit(habit)
+      setHabits(prev => [...prev, ENGLISH_HABIT])
+    }
+    if (!habit.isArchived) await recordHabitTap(habit)
+  }, [habits, recordHabitTap])
 
   // ── Handle parent approval ─────────────────────────────────────────────────
   const handleApproveHabit = useCallback(async (habitId: string) => {
@@ -351,6 +403,18 @@ export default function App({ initialData, userEmail, onSignOut }: AppProps) {
             onTapHabit={handleTapHabit}
             onToggleSound={handleToggleSound}
             onShowParent={() => navigateTo('parent-approval')}
+            onOpenEnglish={() => navigateTo('english')}
+          />
+        )
+
+      case 'english':
+        return (
+          <EnglishScreen
+            progress={englishProgress}
+            loadError={englishError}
+            entry={entries.get(ENGLISH_HABIT_ID)}
+            onFinish={handleEnglishFinish}
+            onBack={() => navigateTo('home')}
           />
         )
 
