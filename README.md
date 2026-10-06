@@ -4,8 +4,8 @@
 
 **A habit gamification app for kids — powered by a magical unicorn pet**
 
-[![Live App](https://img.shields.io/badge/Live%20App-Open%20Sparkle-%237c3aed?style=for-the-badge&logo=github)](https://sparkle-app.pradeeprajr93.workers.dev/)
-[![PWA](https://img.shields.io/badge/PWA-Installable-%235a2d82?style=for-the-badge&logo=pwa)](https://sparkle-app.pradeeprajr93.workers.dev/)
+[![Live App](https://img.shields.io/badge/Live%20App-Open%20Sparkle-%237c3aed?style=for-the-badge&logo=github)](https://sparkle-app.pages.dev/)
+[![PWA](https://img.shields.io/badge/PWA-Installable-%235a2d82?style=for-the-badge&logo=pwa)](https://sparkle-app.pages.dev/)
 [![React](https://img.shields.io/badge/React-19-%2361dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-%233178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
@@ -100,7 +100,7 @@
 | PWA | `vite-plugin-pwa` + Workbox | Service worker, offline cache, installable on any device |
 | Navigation | `history.pushState` + `popstate` | Back/forward button support without a router |
 | Sound | Web Audio API | Synthesised chimes — no audio files, works fully offline |
-| Deployment | Cloudflare Workers static assets (Git integration) | Auto-deploys on every push to `main` |
+| Deployment | Cloudflare Pages (Git integration) | Auto-deploys on every push to `main` |
 
 ### Data flow
 
@@ -177,10 +177,10 @@ Manual UI testing is done with the Playwright MCP server configured in `.mcp.jso
 
 ## Deployment
 
-Cloudflare (Workers static assets, Git-connected) builds every push to `main` and serves https://sparkle-app.pradeeprajr93.workers.dev/:
+Cloudflare Pages (Git-connected) builds every push to `main` and serves https://sparkle-app.pages.dev/:
 
 - Build command `npm run build`, output directory `dist`
-- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set under Settings → Build → Variables and secrets (build-time, not runtime — Vite inlines them)
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set as Pages environment variables (Vite inlines them at build time — redeploy after changing)
 
 The database schema lives in `supabase/migrations/` — run it once in the Supabase SQL editor for a new project. Google sign-in needs the Google provider enabled in Supabase Auth, and the deployed URL added to Auth → URL Configuration → Redirect URLs.
 

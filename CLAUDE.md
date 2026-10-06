@@ -14,7 +14,7 @@ There are no tests. Validation is done manually via the Playwright MCP server co
 
 ## Deployment
 
-Cloudflare (Workers static assets, Git-connected) builds every push to `main`: `npm run build` → `dist/`, served at https://sparkle-app.pradeeprajr93.workers.dev/ (`base: '/'`). `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` must be **build** variables (Settings → Build → Variables and secrets) because Vite inlines them at build time. Schema lives in `supabase/migrations/` (applied manually via the SQL editor).
+Cloudflare Pages (Git-connected) builds every push to `main`: `npm run build` → `dist/`, served at https://sparkle-app.pages.dev/ (`base: '/'`). `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are Pages environment variables; Vite inlines them at build time, so changing them needs a redeploy. Schema lives in `supabase/migrations/` (applied manually via the SQL editor).
 
 ## Architecture
 
