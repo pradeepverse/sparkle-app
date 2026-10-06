@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Habit, DailyEntry, UserProgress } from '../../types'
-import { getStarsPerDay } from '../../storage/indexedDB'
+import { getStarsPerDay } from '../../storage/db'
 import styles from './ParentDashboard.module.css'
 
 interface ParentDashboardProps {

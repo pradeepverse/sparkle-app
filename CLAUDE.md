@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev       # Start Vite dev server (http://localhost:5173/sparkle-app/)
+npm run dev       # Start Vite dev server (http://localhost:5173/) — needs .env.local (copy .env.example)
 npm run build     # TypeScript check + production build (tsc --noEmit && vite build)
 npx tsc --noEmit  # Type-check only, no output files
 ```
@@ -14,7 +14,7 @@ There are no tests. Validation is done manually via the Playwright MCP server co
 
 ## Deployment
 
-Push to `main` → GitHub Actions runs `npm run build` → deploys `dist/` to GitHub Pages. The `base: '/sparkle-app/'` in `vite.config.ts` must match the GitHub repo name exactly.
+Cloudflare Pages (Git integration) builds every push to `main`: `npm run build` → `dist/`, served at the domain root (`base: '/'`). `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are set as Pages environment variables. Schema lives in `supabase/migrations/` (applied manually via the SQL editor).
 
 ## Architecture
 
@@ -27,21 +27,22 @@ App.tsx  ──(props + handlers)──▶  Screens / Components
             ▲
             │ reads on mount, writes on every change
             │
-    localStorage ──── UserProgress, Parent PIN (JSON-serialised)
-    IndexedDB    ──── habits, daily_entries, rewards  (via idb v8)
+    Supabase ──── user_settings (progress, parent_pin, star_rupee_ratio), habits, daily_entries, rewards
+    localStorage ── sound on/off only (per device)
 ```
 
-`App.tsx` seeds default habits and rewards into IndexedDB on first load (conditional — only if the record doesn't exist yet, to preserve parent edits). It then loads all records from IDB into React state. The `habits` state array contains **all** habits including archived ones; screens filter with `!h.isArchived` themselves.
+`main.tsx` renders `AuthGate` (`src/auth/`): no session → Google sign-in screen; signed in → `loadUserData()`. A missing `user_settings` row means a brand-new account, so default habits/rewards are seeded once (`seedNewUser`). `App` receives the loaded data as `initialData` and is keyed on user id. Every table has `user_id default auth.uid()` plus an RLS policy, so queries never filter by user explicitly. The `habits` state array contains **all** habits including archived ones; screens filter with `!h.isArchived` themselves.
 
 ### Storage layer (`src/storage/`)
 
 | File | Purpose |
 |---|---|
+| `supabase.ts` | Supabase client from `VITE_SUPABASE_*` env vars |
+| `db.ts` | Typed functions over the Supabase tables (`saveHabit`, `saveEntry`, `getEntriesForDate`, `getStarsPerDay`, `saveProgress`, …) with camelCase ↔ snake_case row mappers |
 | `localStorage.ts` | `lsGet<T>` / `lsSet<T>` — typed JSON wrappers, never throw |
-| `indexedDB.ts` | `getDB()` singleton + generic `idbGet/Put/Delete/GetAll` + convenience helpers (`getEntriesForDate`, `deleteEntriesForDate`, `getStarsPerDay`) |
-| `backup.ts` | `exportBackup()` → download JSON file; `importBackup(file)` → clear+restore all IDB stores + localStorage, then `location.reload()` |
+| `backup.ts` | `exportBackup()` → download JSON file; `importBackup(file)` → replace all of the user's rows, then `location.reload()`. Format is unchanged from the pre-cloud IndexedDB version, so old backups import |
 
-IDB schema: three object stores keyed by `id` string. `daily_entries` has indexes `by_habit` and `by_date`.
+Tables are keyed by `(user_id, id)`; `id` is the same string the app generates (`daily_entries.id = ${habitId}_${dateString}`).
 
 ### Habit types and approval flow
 
@@ -53,7 +54,7 @@ Approval flow: child taps → `DailyEntry` written with `approvalStatus: 'pendin
 
 ### Parent section
 
-Gated by a 4-digit PIN (`PinGate` component). `pinUnlocked` state in `App.tsx` resets to `false` on every navigation away from `parent-approval`. The parent section has three tabs: Approvals, Dashboard, Configure.
+Gated by a 4-digit PIN (`PinGate` component; the PIN is stored in `user_settings.parent_pin`). `pinUnlocked` state in `App.tsx` resets to `false` on every navigation away from `parent-approval`. The parent section has three tabs: Approvals, Dashboard, Configure.
 
 ### Unicorn mood
 

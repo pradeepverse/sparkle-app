@@ -4,9 +4,8 @@
 
 **A habit gamification app for kids — powered by a magical unicorn pet**
 
-[![Live App](https://img.shields.io/badge/Live%20App-Open%20Sparkle-%237c3aed?style=for-the-badge&logo=github)](https://pradeepverse.github.io/sparkle-app/)
-[![Deploy](https://img.shields.io/github/actions/workflow/status/pradeepverse/sparkle-app/deploy.yml?style=for-the-badge&label=Deploy&logo=githubactions&logoColor=white)](https://github.com/pradeepverse/sparkle-app/actions)
-[![PWA](https://img.shields.io/badge/PWA-Installable%20%26%20Offline-%235a2d82?style=for-the-badge&logo=pwa)](https://pradeepverse.github.io/sparkle-app/)
+[![Live App](https://img.shields.io/badge/Live%20App-Open%20Sparkle-%237c3aed?style=for-the-badge&logo=github)](https://sparkle-app.pages.dev/)
+[![PWA](https://img.shields.io/badge/PWA-Installable-%235a2d82?style=for-the-badge&logo=pwa)](https://sparkle-app.pages.dev/)
 [![React](https://img.shields.io/badge/React-19-%2361dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-%233178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
@@ -96,12 +95,12 @@
 | UI framework | React 19 + TypeScript 5 | Type-safe, component-driven |
 | Build tool | Vite 6 | Instant HMR, fast production builds |
 | Styling | CSS Modules | Scoped styles, no runtime cost |
-| Local persistence | `localStorage` | UserProgress + parent PIN (simple key/value) |
-| Structured storage | IndexedDB via `idb` v8 | Habits, daily entries, rewards — queryable, survives reloads |
+| Backend | Supabase (Postgres + Auth) via `supabase-js` | Per-user data behind row-level security; syncs across devices |
+| Login | Google OAuth (Supabase Auth) | One sign-in per device, no passwords |
 | PWA | `vite-plugin-pwa` + Workbox | Service worker, offline cache, installable on any device |
 | Navigation | `history.pushState` + `popstate` | Back/forward button support without a router |
 | Sound | Web Audio API | Synthesised chimes — no audio files, works fully offline |
-| Deployment | GitHub Actions → GitHub Pages | Auto-deploys on every push to `main` |
+| Deployment | Cloudflare Pages (Git integration) | Auto-deploys on every push to `main` |
 
 ### Data flow
 
@@ -110,9 +109,13 @@ App.tsx  ──(props + handlers)──▶  Screens / Components
             ▲
             │ reads on mount, writes on every change
             │
-    localStorage ──── UserProgress (stars, streak, level), Parent PIN
-    IndexedDB    ──── habits, daily_entries, rewards  (idb v8)
+    Supabase (Postgres + RLS, per Google account)
+      user_settings ── progress, parent PIN, star→rupee ratio
+      habits, daily_entries, rewards
+    localStorage ──── sound on/off (per device)
 ```
+
+`main.tsx` renders `AuthGate`: no session → Google sign-in; signed in → load (or seed, on first sign-in) that user's data → mount `App` with it.
 
 All state lives in `App.tsx` and flows down as props — no context, no global store.
 
@@ -135,9 +138,13 @@ src/
 │   ├── ConfigureScreen/    Habits + rewards CRUD, backup/restore
 │   └── RewardsScreen/      Shop grid, redeem flow
 ├── storage/
-│   ├── localStorage.ts     lsGet / lsSet typed wrappers
-│   ├── indexedDB.ts        getDB singleton + helpers (getEntriesForDate, getStarsPerDay, …)
-│   └── backup.ts           exportBackup() / importBackup()
+│   ├── supabase.ts         Supabase client (reads VITE_SUPABASE_* env vars)
+│   ├── db.ts               Typed CRUD over Supabase tables (camelCase ↔ snake_case mappers)
+│   ├── localStorage.ts     lsGet / lsSet typed wrappers (device prefs only)
+│   └── backup.ts           exportBackup() / importBackup() — JSON file, same format as pre-cloud
+├── auth/
+│   ├── AuthGate.tsx        Session → load/seed user data → <App>
+│   └── LoginScreen.tsx     "Sign in with Google"
 ├── data/
 │   ├── habits.ts           DEFAULT_HABITS (seeded on first run)
 │   └── rewards.ts          DEFAULT_REWARDS (seeded on first run)
@@ -158,7 +165,8 @@ src/
 git clone https://github.com/pradeepverse/sparkle-app.git
 cd sparkle-app
 npm install
-npm run dev        # http://localhost:5173/sparkle-app/
+cp .env.example .env.local   # fill in your Supabase URL + anon key
+npm run dev        # http://localhost:5173/
 npm run build      # TypeScript check + production build
 npx tsc --noEmit   # type-check only
 ```
@@ -169,13 +177,12 @@ Manual UI testing is done with the Playwright MCP server configured in `.mcp.jso
 
 ## Deployment
 
-Every push to `main` triggers `.github/workflows/deploy.yml`:
+Cloudflare Pages is connected to this repo and builds every push to `main`:
 
-1. `npm ci` → `npm run build` (`tsc --noEmit && vite build`)
-2. Upload `dist/` as a GitHub Pages artifact
-3. Deploy to `https://pradeepverse.github.io/sparkle-app/`
+- Build command `npm run build`, output directory `dist`
+- Environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set in the Pages project
 
-> **Note:** The `base: '/sparkle-app/'` in `vite.config.ts` must match the GitHub repository name exactly.
+The database schema lives in `supabase/migrations/` — run it once in the Supabase SQL editor for a new project. Google sign-in needs the Google provider enabled in Supabase Auth, and the deployed URL added to Auth → URL Configuration → Redirect URLs.
 
 ---
 

@@ -66,8 +66,6 @@ export const UNICORN_LEVEL_NAMES: Record<number, string> = {
   4: 'Rainbow Sparkle',
 }
 
-// ─── Storage constants ────────────────────────────────────────────────────────
-
 // ─── Star-to-currency ratio ───────────────────────────────────────────────────
 
 export interface StarRupeeRatio {
@@ -77,18 +75,16 @@ export interface StarRupeeRatio {
 
 export const DEFAULT_STAR_RUPEE_RATIO: StarRupeeRatio = { stars: 25, rupees: 5 }
 
+export const DEFAULT_PROGRESS: UserProgress = {
+  totalStars: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  lastActiveDate: '',
+  unicornLevel: 1,
+  unicornName: UNICORN_LEVEL_NAMES[1],
+}
+
+// Per-device preferences only — everything else lives in Supabase.
 export const LOCAL_STORAGE_KEYS = {
-  USER_PROGRESS: 'sparkle_progress',
-  PARENT_PIN: 'sparkle_pin',
   SOUND_ENABLED: 'sparkle_sound',
-  STAR_RUPEE_RATIO: 'sparkle_star_rupee_ratio',
-} as const
-
-export const IDB_DB_NAME = 'sparkle-db'
-export const IDB_DB_VERSION = 1
-
-export const IDB_STORES = {
-  HABITS: 'habits',
-  DAILY_ENTRIES: 'daily_entries',
-  REWARDS: 'rewards',
 } as const

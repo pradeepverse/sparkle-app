@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App'
+import { AuthGate } from './auth/AuthGate'
 import './styles/global.css'
 import './styles/animations.css'
 
@@ -9,6 +9,6 @@ if (!rootEl) throw new Error('Root element #root not found in index.html')
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    <AuthGate />
   </StrictMode>
 )

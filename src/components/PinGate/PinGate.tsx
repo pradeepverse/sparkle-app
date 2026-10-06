@@ -1,17 +1,16 @@
 import { useState } from 'react'
-import { lsGet, lsSet } from '../../storage/localStorage'
-import { LOCAL_STORAGE_KEYS } from '../../types'
 import styles from './PinGate.module.css'
 
 interface PinGateProps {
+  savedPin: string | null
+  onSetPin: (pin: string) => Promise<void>
   onUnlock: () => void
   onBack: () => void
 }
 
 const PIN_LENGTH = 4
 
-export function PinGate({ onUnlock, onBack }: PinGateProps) {
-  const savedPin = lsGet<string>(LOCAL_STORAGE_KEYS.PARENT_PIN)
+export function PinGate({ savedPin, onSetPin, onUnlock, onBack }: PinGateProps) {
   const isSetup = !savedPin
 
   const [input, setInput] = useState('')
@@ -46,8 +45,13 @@ export function PinGate({ onUnlock, onBack }: PinGateProps) {
       } else {
         // Confirm stage
         if (next === confirm) {
-          lsSet(LOCAL_STORAGE_KEYS.PARENT_PIN, next)
-          onUnlock()
+          onSetPin(next)
+            .then(onUnlock)
+            .catch(() => {
+              setConfirm('')
+              setStage('enter')
+              triggerShake("Couldn't save the PIN — check your connection")
+            })
         } else {
           setConfirm('')
           setStage('enter')

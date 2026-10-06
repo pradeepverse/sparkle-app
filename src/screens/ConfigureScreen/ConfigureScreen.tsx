@@ -1,7 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
 import type { Habit, Reward, StarRupeeRatio } from '../../types'
-import { LOCAL_STORAGE_KEYS } from '../../types'
-import { lsSet } from '../../storage/localStorage'
 import { exportBackup, importBackup, readBackupMeta } from '../../storage/backup'
 import styles from './ConfigureScreen.module.css'
 
@@ -65,6 +63,9 @@ interface ConfigureScreenProps {
   onDeleteReward: (rewardId: string) => Promise<void>
   ratio: StarRupeeRatio
   onRatioChange: (r: StarRupeeRatio) => void
+  onChangePin: (pin: string) => Promise<void>
+  userEmail: string
+  onSignOut: () => void
 }
 
 export function ConfigureScreen({
@@ -75,6 +76,9 @@ export function ConfigureScreen({
   onDeleteReward,
   ratio,
   onRatioChange,
+  onChangePin,
+  userEmail,
+  onSignOut,
 }: ConfigureScreenProps) {
   const [tab, setTab] = useState<'habits' | 'rewards' | 'backup'>('habits')
 
@@ -103,7 +107,7 @@ export function ConfigureScreen({
 
       {tab === 'habits'  && <HabitsConfig habits={habits} onSave={onSaveHabit} />}
       {tab === 'rewards' && <RewardsConfig rewards={rewards} onSave={onSaveReward} onDelete={onDeleteReward} ratio={ratio} onRatioChange={onRatioChange} />}
-      {tab === 'backup'  && <BackupConfig />}
+      {tab === 'backup'  && <BackupConfig onChangePin={onChangePin} userEmail={userEmail} onSignOut={onSignOut} />}
     </div>
   )
 }
@@ -674,7 +678,7 @@ function PinDotField({
 
 // ─── PIN change ───────────────────────────────────────────────────────────────
 
-function PinChangeCard() {
+function PinChangeCard({ onChangePin }: { onChangePin: (pin: string) => Promise<void> }) {
   const [open, setOpen]       = useState(false)
   const [newPin, setNewPin]   = useState('')
   const [confirm, setConfirm] = useState('')
@@ -684,10 +688,15 @@ function PinChangeCard() {
   const handleNewPin = useCallback((v: string) => { setNewPin(v); setError('') }, [])
   const handleConfirm = useCallback((v: string) => { setConfirm(v); setError('') }, [])
 
-  function handleSave() {
+  async function handleSave() {
     if (newPin.length !== 4) { setError('PIN must be exactly 4 digits'); return }
     if (newPin !== confirm)  { setError("PINs don't match — try again"); return }
-    lsSet(LOCAL_STORAGE_KEYS.PARENT_PIN, newPin)
+    try {
+      await onChangePin(newPin)
+    } catch {
+      setError("Couldn't save the PIN — check your connection")
+      return
+    }
     setOpen(false)
     setNewPin('')
     setConfirm('')
@@ -735,9 +744,27 @@ function PinChangeCard() {
   )
 }
 
+// ─── Account ──────────────────────────────────────────────────────────────────
+
+function AccountCard({ userEmail, onSignOut }: { userEmail: string; onSignOut: () => void }) {
+  return (
+    <div className={styles.backupCard}>
+      <div className={styles.backupCardTitle}>👤 Account</div>
+      <p className={styles.backupDesc}>
+        Signed in as <strong>{userEmail}</strong>. Progress syncs across every device signed in to this account.
+      </p>
+      <button className={styles.cancelBtn} onClick={onSignOut}>Sign out</button>
+    </div>
+  )
+}
+
 // ─── Backup config ────────────────────────────────────────────────────────────
 
-function BackupConfig() {
+function BackupConfig({ onChangePin, userEmail, onSignOut }: {
+  onChangePin: (pin: string) => Promise<void>
+  userEmail: string
+  onSignOut: () => void
+}) {
   const [importFile, setImportFile]     = useState<File | null>(null)
   const [importMeta, setImportMeta]     = useState<{ exportedAt: string } | null>(null)
   const [exporting,  setExporting]      = useState(false)
@@ -793,15 +820,18 @@ function BackupConfig() {
 
   return (
     <div className={styles.section}>
+      {/* ── Account ────────────────────────────────────────── */}
+      <AccountCard userEmail={userEmail} onSignOut={onSignOut} />
+
       {/* ── PIN ────────────────────────────────────────────── */}
-      <PinChangeCard />
+      <PinChangeCard onChangePin={onChangePin} />
 
       {/* ── Export ─────────────────────────────────────────── */}
       <div className={styles.backupCard}>
         <div className={styles.backupCardTitle}>📤 Export</div>
         <p className={styles.backupDesc}>
           Downloads a <code>.json</code> file with all habits, progress, rewards, and PIN.
-          Keep it somewhere safe to restore on another device.
+          Your data is already saved in the cloud — this is an extra copy for safekeeping.
         </p>
         <button
           className={[styles.exportBtn, exported ? styles.exportBtnDone : ''].join(' ')}

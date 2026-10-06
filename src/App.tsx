@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Screen, Habit, DailyEntry, UserProgress, Reward, StarRupeeRatio } from './types'
-import { LOCAL_STORAGE_KEYS, IDB_STORES, UNICORN_LEVEL_NAMES, DEFAULT_STAR_RUPEE_RATIO } from './types'
+import { LOCAL_STORAGE_KEYS, UNICORN_LEVEL_NAMES, DEFAULT_STAR_RUPEE_RATIO } from './types'
 import { lsGet, lsSet } from './storage/localStorage'
 import { playPendingTap, playStarsEarned, playLuckyStar, playRewardRedeemed } from './utils/sounds'
-import { idbGet, idbGetAll, idbPut, idbDelete, getEntriesForDate, deleteEntriesForDate } from './storage/indexedDB'
-import { DEFAULT_HABITS, PARENT_APPROVE_HABIT_IDS } from './data/habits'
+import {
+  saveHabit, saveReward, deleteReward, saveEntry, getEntriesForDate, deleteEntriesForDate,
+  saveProgress, saveParentPin, saveStarRupeeRatio, type UserData,
+} from './storage/db'
+import { PARENT_APPROVE_HABIT_IDS } from './data/habits'
 import { ConfigureScreen } from './screens/ConfigureScreen/ConfigureScreen'
-import { DEFAULT_REWARDS } from './data/rewards'
 import { HomeScreen } from './screens/HomeScreen/HomeScreen'
 import { ParentApprovalScreen } from './screens/ParentApprovalScreen/ParentApprovalScreen'
 import { ParentDashboard } from './screens/ParentDashboard/ParentDashboard'
@@ -14,17 +16,6 @@ import { RewardsScreen } from './screens/RewardsScreen/RewardsScreen'
 import { PinGate } from './components/PinGate/PinGate'
 import { StarBurst } from './components/StarBurst/StarBurst'
 import styles from './App.module.css'
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const DEFAULT_PROGRESS: UserProgress = {
-  totalStars: 0,
-  currentStreak: 0,
-  longestStreak: 0,
-  lastActiveDate: '',
-  unicornLevel: 1,
-  unicornName: UNICORN_LEVEL_NAMES[1],
-}
 
 // ─── Hash-based navigation helpers ───────────────────────────────────────────
 
@@ -62,14 +53,19 @@ function makeEntryId(habitId: string, date: string) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-export default function App() {
+interface AppProps {
+  initialData: UserData
+  userEmail: string
+  onSignOut: () => void
+}
+
+export default function App({ initialData, userEmail, onSignOut }: AppProps) {
   const [screen, setScreen]   = useState<Screen>(() => getScreenFromHash())
-  const [habits, setHabits]   = useState<Habit[]>([])
-  const [rewards, setRewards] = useState<Reward[]>([])
+  const [habits, setHabits]   = useState<Habit[]>(initialData.habits)
+  const [rewards, setRewards] = useState<Reward[]>(initialData.rewards)
   const [entries, setEntries] = useState<Map<string, DailyEntry>>(new Map())
-  const [progress, setProgress] = useState<UserProgress>(
-    () => lsGet<UserProgress>(LOCAL_STORAGE_KEYS.USER_PROGRESS) ?? DEFAULT_PROGRESS
-  )
+  const [progress, setProgress] = useState<UserProgress>(initialData.progress)
+  const [parentPin, setParentPin] = useState<string | null>(initialData.parentPin)
   const [isUnicornAnimating, setIsUnicornAnimating] = useState(false)
   const [starBurstTrigger,   setStarBurstTrigger]   = useState(0)
   const [starBurstBonus,     setStarBurstBonus]      = useState(0)
@@ -86,13 +82,18 @@ export default function App() {
   const [parentTab,    setParentTab]    = useState<'approval' | 'dashboard' | 'configure'>('approval')
   const [redeemTarget, setRedeemTarget] = useState<Reward | null>(null)
   const [starRupeeRatio, setStarRupeeRatio] = useState<StarRupeeRatio>(
-    () => lsGet<StarRupeeRatio>(LOCAL_STORAGE_KEYS.STAR_RUPEE_RATIO) ?? DEFAULT_STAR_RUPEE_RATIO
+    initialData.starRupeeRatio ?? DEFAULT_STAR_RUPEE_RATIO
   )
 
   function handleRatioChange(ratio: StarRupeeRatio) {
     setStarRupeeRatio(ratio)
-    lsSet(LOCAL_STORAGE_KEYS.STAR_RUPEE_RATIO, ratio)
+    saveStarRupeeRatio(ratio).catch(console.error)
   }
+
+  const handleSetPin = useCallback(async (pin: string) => {
+    await saveParentPin(pin)
+    setParentPin(pin)
+  }, [])
 
   // ── Browser history: sync screen state with URL hash ─────────────────────
   // Stamp the initial history entry so the very first back-press works.
@@ -108,33 +109,6 @@ export default function App() {
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [])
-
-  // ── Seed habits + rewards into IndexedDB ──────────────────────────────────
-  useEffect(() => {
-    async function seedAndLoad() {
-      // Seed default habits only if they don't exist yet (preserves parent edits).
-      // Also migrate requiresApproval onto old records that predate this field.
-      for (const habit of DEFAULT_HABITS) {
-        const existing = await idbGet(IDB_STORES.HABITS, habit.id)
-        if (!existing) {
-          await idbPut(IDB_STORES.HABITS, habit)
-        } else if (habit.requiresApproval && existing.requiresApproval === undefined) {
-          await idbPut(IDB_STORES.HABITS, { ...existing, requiresApproval: habit.requiresApproval })
-        }
-      }
-      const allHabits = await idbGetAll(IDB_STORES.HABITS) as Habit[]
-      setHabits(allHabits)
-
-      // Seed default rewards only if they don't exist yet (preserves isUnlocked state)
-      for (const reward of DEFAULT_REWARDS) {
-        const existing = await idbGet(IDB_STORES.REWARDS, reward.id)
-        if (!existing) await idbPut(IDB_STORES.REWARDS, reward)
-      }
-      const allRewards = await idbGetAll(IDB_STORES.REWARDS) as Reward[]
-      setRewards(allRewards)
-    }
-    seedAndLoad().catch(console.error)
   }, [])
 
   // ── Midnight rollover detector ─────────────────────────────────────────────
@@ -155,9 +129,11 @@ export default function App() {
       .catch(console.error)
   }, [currentDate])
 
-  // ── Persist progress to localStorage whenever it changes ─────────────────
+  // ── Persist progress whenever it changes (skip the value we just loaded) ──
+  const loadedProgress = useRef(initialData.progress)
   useEffect(() => {
-    lsSet(LOCAL_STORAGE_KEYS.USER_PROGRESS, progress)
+    if (progress === loadedProgress.current) return
+    saveProgress(progress).catch(console.error)
   }, [progress])
 
   // ── Lock parent section when navigating away ──────────────────────────────
@@ -193,7 +169,7 @@ export default function App() {
       bonusStars: existing?.bonusStars ?? 0,
     }
 
-    await idbPut(IDB_STORES.DAILY_ENTRIES, updated)
+    await saveEntry(updated)
     setEntries(prev => new Map(prev).set(habitId, updated))
 
     if (needsApproval) {
@@ -221,7 +197,7 @@ export default function App() {
       bonusStars: existing.bonusStars + bonus,
     }
 
-    await idbPut(IDB_STORES.DAILY_ENTRIES, updated)
+    await saveEntry(updated)
     setEntries(prev => new Map(prev).set(habitId, updated))
     triggerCelebration(habit.points, bonus, today)
   }, [habits, entries])
@@ -244,14 +220,14 @@ export default function App() {
       bonusStars: 0,
     }
 
-    await idbPut(IDB_STORES.DAILY_ENTRIES, entry)
+    await saveEntry(entry)
     setEntries(prev => new Map(prev).set(habitId, entry))
     triggerCelebration(habit.points, 0, today)
   }, [habits, entries])
 
   // ── Configure: save / delete habits and rewards ───────────────────────────
   const handleSaveHabit = useCallback(async (habit: Habit) => {
-    await idbPut(IDB_STORES.HABITS, habit)
+    await saveHabit(habit)
     setHabits(prev => {
       const idx = prev.findIndex(h => h.id === habit.id)
       if (idx >= 0) { const next = [...prev]; next[idx] = habit; return next }
@@ -260,7 +236,7 @@ export default function App() {
   }, [])
 
   const handleSaveReward = useCallback(async (reward: Reward) => {
-    await idbPut(IDB_STORES.REWARDS, reward)
+    await saveReward(reward)
     setRewards(prev => {
       const idx = prev.findIndex(r => r.id === reward.id)
       if (idx >= 0) { const next = [...prev]; next[idx] = reward; return next }
@@ -269,7 +245,7 @@ export default function App() {
   }, [])
 
   const handleDeleteReward = useCallback(async (rewardId: string) => {
-    await idbDelete(IDB_STORES.REWARDS, rewardId)
+    await deleteReward(rewardId)
     setRewards(prev => prev.filter(r => r.id !== rewardId))
   }, [])
 
@@ -304,7 +280,7 @@ export default function App() {
   const handleRedeemReward = useCallback(async (reward: Reward) => {
     if (progress.totalStars < reward.starCost) return
     const updated = { ...reward, isUnlocked: true }
-    await idbPut(IDB_STORES.REWARDS, updated)
+    await saveReward(updated)
     setRewards(prev => prev.map(r => r.id === reward.id ? updated : r))
     setProgress(prev => ({ ...prev, totalStars: prev.totalStars - reward.starCost }))
     if (soundEnabled) playRewardRedeemed()
@@ -382,6 +358,8 @@ export default function App() {
         if (!pinUnlocked) {
           return (
             <PinGate
+              savedPin={parentPin}
+              onSetPin={handleSetPin}
               onUnlock={() => setPinUnlocked(true)}
               onBack={() => navigateTo('home')}
             />
@@ -423,6 +401,9 @@ export default function App() {
                   onDeleteReward={handleDeleteReward}
                   ratio={starRupeeRatio}
                   onRatioChange={handleRatioChange}
+                  onChangePin={handleSetPin}
+                  userEmail={userEmail}
+                  onSignOut={onSignOut}
                 />
               </div>
             ) : parentTab === 'approval' ? (
