@@ -347,11 +347,11 @@ function HabitForm({
           <input
             className={styles.numberInput}
             type="number"
-            min={1}
+            min={-100}
             max={100}
             value={form.points || ''}
             onChange={e => f({ points: e.target.value === '' ? 0 : Number(e.target.value) })}
-            onBlur={() => f({ points: Math.max(1, form.points || 1) })}
+            onBlur={() => { if (form.points === 0) f({ points: 1 }) }}
           />
         </div>
       </div>

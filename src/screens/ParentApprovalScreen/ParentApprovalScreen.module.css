@@ -194,3 +194,60 @@
   font-weight: 900;
   color: var(--color-primary);
 }
+
+/* ─── Deduct stars ────────────────────────────────────────── */
+
+.deductCard {
+  background: #fff8f8;
+  border: 2px solid #ffcdd2;
+  border-radius: var(--radius-card);
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.deductNote {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: #b71c1c;
+}
+
+.deductRow {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.deductInput {
+  width: 90px;
+  padding: 0.65rem 0.8rem;
+  border: 2px solid #ef9a9a;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-base);
+  font-weight: 900;
+  text-align: center;
+  background: white;
+  color: var(--color-text);
+}
+
+.deductInput:focus {
+  outline: none;
+  border-color: #ef5350;
+}
+
+.deductBtn {
+  flex: 1;
+  padding: 0.7rem 1.2rem;
+  background: #ef5350;
+  color: white;
+  border-radius: var(--radius-button);
+  font-weight: 900;
+  font-size: 1rem;
+  box-shadow: 0 3px 8px rgba(239, 83, 80, 0.35);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.deductBtn:hover:not(:disabled) { background: #c62828; transform: scale(1.04); }
+.deductBtn:active:not(:disabled) { transform: scale(0.96); }
+.deductBtn:disabled { background: #ef9a9a; box-shadow: none; cursor: default; }

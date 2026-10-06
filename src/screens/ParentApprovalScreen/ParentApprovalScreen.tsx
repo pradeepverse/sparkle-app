@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Habit, DailyEntry } from '../../types'
 import { PARENT_APPROVE_HABIT_IDS } from '../../data/habits'
 import styles from './ParentApprovalScreen.module.css'
@@ -7,6 +8,7 @@ interface ParentApprovalScreenProps {
   entries: Map<string, DailyEntry>
   onApprove: (habitId: string) => void
   onAwardDirect: (habitId: string) => void
+  onDeductStars: (amount: number) => void
   onBack: () => void
 }
 
@@ -15,10 +17,20 @@ export function ParentApprovalScreen({
   entries,
   onApprove,
   onAwardDirect,
+  onDeductStars,
   onBack,
 }: ParentApprovalScreenProps) {
+  const [deductAmt, setDeductAmt] = useState('')
+
+  function handleDeduct() {
+    const n = parseInt(deductAmt)
+    if (!n || n < 1) return
+    onDeductStars(n)
+    setDeductAmt('')
+  }
+
   const pendingHabits = habits.filter(h =>
-    PARENT_APPROVE_HABIT_IDS.has(h.id) && entries.get(h.id)?.approvalStatus === 'pending'
+    (h.requiresApproval ?? PARENT_APPROVE_HABIT_IDS.has(h.id)) && entries.get(h.id)?.approvalStatus === 'pending'
   )
   const parentOnlyHabits = habits.filter(h => h.type === 'parent-only')
   const approvedHabits = habits.filter(h => {
@@ -118,6 +130,33 @@ export function ParentApprovalScreen({
           </div>
         </section>
       )}
+
+      {/* ── Manual star deduction ────────────────────────────── */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>⚠️ Deduct Stars</h2>
+        <div className={styles.deductCard}>
+          <p className={styles.deductNote}>Remove stars for bad behaviour</p>
+          <div className={styles.deductRow}>
+            <input
+              className={styles.deductInput}
+              type="number"
+              min={1}
+              max={50}
+              placeholder="Stars"
+              value={deductAmt}
+              onChange={e => setDeductAmt(e.target.value)}
+              onBlur={() => { if (deductAmt && parseInt(deductAmt) < 1) setDeductAmt('1') }}
+            />
+            <button
+              className={styles.deductBtn}
+              onClick={handleDeduct}
+              disabled={!deductAmt || parseInt(deductAmt) < 1}
+            >
+              ⚠️ Deduct
+            </button>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }

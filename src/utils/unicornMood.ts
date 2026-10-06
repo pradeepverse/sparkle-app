@@ -12,7 +12,7 @@ export function computeMood(
   maxPossibleToday: number,
   streak: number
 ): UnicornMood {
-  if (starsEarnedToday === 0) return 'sleepy'
+  if (starsEarnedToday <= 0) return 'sleepy'
 
   const pct = maxPossibleToday > 0 ? starsEarnedToday / maxPossibleToday : 0
 

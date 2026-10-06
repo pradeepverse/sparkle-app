@@ -130,3 +130,34 @@
   opacity: 0.85;
   border-color: #e1bee7;
 }
+
+/* ─── Penalty (negative-point) habits ───────────────────────────────── */
+
+.penalty {
+  border-color: #ffcdd2;
+  background: #fff8f8;
+}
+
+.pointsNeg {
+  color: #c62828;
+}
+
+.penaltyBtn {
+  background: #ef5350;
+  box-shadow: 0 3px 8px rgba(239, 83, 80, 0.4);
+}
+
+.penaltyBtn:hover:not(:disabled) {
+  background: #c62828;
+  transform: scale(1.06);
+}
+
+.penaltyBtn:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: none;
+}
+
+.penaltyBtn:disabled {
+  background: #ef9a9a;
+  box-shadow: none;
+}

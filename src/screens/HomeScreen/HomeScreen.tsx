@@ -2,7 +2,6 @@ import type { Habit, DailyEntry, UserProgress } from '../../types'
 import { UnicornPet } from '../../components/UnicornPet/UnicornPet'
 import { HabitCard } from '../../components/HabitCard/HabitCard'
 import { computeMood } from '../../utils/unicornMood'
-import { MAX_DAILY_STARS } from '../../data/habits'
 import styles from './HomeScreen.module.css'
 
 interface HomeScreenProps {
@@ -31,7 +30,13 @@ export function HomeScreen({
   const starsToday = Array.from(entries.values()).reduce(
     (sum, e) => sum + e.starsEarned + e.bonusStars, 0
   )
-  const mood = computeMood(starsToday, MAX_DAILY_STARS, progress.currentStreak)
+  const maxPossibleToday = habits
+    .filter(h => !h.isArchived && h.points > 0)
+    .reduce((sum, h) => {
+      if (h.type === 'repeatable' && h.maxPerDay !== undefined) return sum + h.points * h.maxPerDay
+      return sum + h.points
+    }, 0)
+  const mood = computeMood(starsToday, maxPossibleToday, progress.currentStreak)
 
   const morningHabits = habits.filter(h => h.timeOfDay === 'morning' && !h.isArchived)
   const alldayHabits  = habits.filter(h => h.timeOfDay === 'allday'  && !h.isArchived)

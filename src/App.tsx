@@ -273,6 +273,14 @@ export default function App() {
     setRewards(prev => prev.filter(r => r.id !== rewardId))
   }, [])
 
+  // ── Parent: manual star deduction ─────────────────────────────────────────
+  const handleDeductStars = useCallback((amount: number) => {
+    setProgress(prev => ({
+      ...prev,
+      totalStars: Math.max(0, prev.totalStars - amount),
+    }))
+  }, [])
+
   // ── Reset today's progress ────────────────────────────────────────────────
   const handleResetDay = useCallback(async () => {
     const today = getTodayString()
@@ -423,6 +431,7 @@ export default function App() {
                 entries={entries}
                 onApprove={handleApproveHabit}
                 onAwardDirect={handleAwardDirectHabit}
+                onDeductStars={handleDeductStars}
                 onBack={() => navigateTo('home')}
               />
             ) : (
